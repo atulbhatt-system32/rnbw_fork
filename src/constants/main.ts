@@ -46,3 +46,16 @@ export const DargItemImage = new Image();
 DargItemImage.src =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=";
 // ----------------------
+
+export const PublicContentPaths: {
+  [key: string]: string[];
+} = {
+  //change this to your own public content path. To view the content, you can use the following URL: host/rnbw
+  images: [
+    "dark-rnbw.png",
+    "empty-image.svg",
+    "light-rnbw.png",
+    "rnbw.png",
+    "rnbw.svg",
+  ],
+};
