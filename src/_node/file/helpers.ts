@@ -1,4 +1,8 @@
-import { FileChangeAlertMessage, RootNodeUid } from "@_constants/main";
+import {
+  FileChangeAlertMessage,
+  PublicContentPaths,
+  RootNodeUid,
+} from "@_constants/main";
 import {
   htmlElementsReferences,
   THtmlElementsReference,
@@ -6,7 +10,9 @@ import {
 import { THtmlElementsReferenceData } from "@_types/main";
 
 import {
+  _createIDBDirectory,
   _path,
+  _writeIDBFile,
   TFileHandlerCollection,
   TFileHandlerInfoObj,
   TFileNodeData,
@@ -149,4 +155,37 @@ export const createURLPath = (
   replacementValue: string,
 ) => {
   return `/${baseString?.replace(partToReplace, replacementValue)}`;
+};
+
+export const hostPublicDir = () => {
+  try {
+    _createIDBDirectory("/public");
+  } catch (e) {
+    console.error(e);
+  }
+  Object.keys(PublicContentPaths).forEach((key) => {
+    const dir = `/public/${key}`;
+    try {
+      _createIDBDirectory(dir);
+    } catch (e) {
+      console.error(e);
+    }
+    const files = PublicContentPaths[key];
+
+    files.forEach((file) => {
+      try {
+        fetch(`${key}/${file}`).then((res) => {
+          try {
+            res.text().then((data) => {
+              _writeIDBFile(`${dir}/${file}`, data);
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  });
 };
