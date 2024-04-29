@@ -5,6 +5,7 @@ import { Workbox } from "workbox-window";
 
 import { LogAllow } from "@_constants/global";
 import MainPage from "@_pages/main";
+import { hostPublicDir } from "@_node/file";
 
 export default function App() {
   // setup nohost-serviceworker
@@ -15,6 +16,7 @@ export default function App() {
       wb.register().then(() => {
         setNohostReady(true);
         LogAllow && console.log("nohost ready");
+        hostPublicDir();
       });
       window.location.href = "/#";
     }
