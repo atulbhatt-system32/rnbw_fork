@@ -55,19 +55,23 @@ export const _removeIDBDirectoryOrFile = async (
   path: string,
 ): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
-    _fs.access(path, _fs.constants.F_OK, (err: Error) => {
-      if (err) {
-        if (err.name === "ENOENT") {
-          // Path does not exist, resolve immediately
-          resolve();
-        } else {
-          // Other error occurred
-          reject(err);
-        }
-      } else {
-        // Path exists, attempt to remove it
-        _sh.rm(path, { recursive: true }, (rmErr: Error) => {
-          rmErr ? reject(rmErr) : resolve();
+    _fs.exists(path, function (exists: boolean) {
+      if (exists) {
+        _fs.access(path, _fs.constants.F_OK, (err: Error) => {
+          if (err) {
+            if (err.name === "ENOENT") {
+              // Path does not exist, resolve immediately
+              resolve();
+            } else {
+              // Other error occurred
+              reject(err);
+            }
+          } else {
+            // Path exists, attempt to remove it
+            _sh.rm(path, { recursive: true }, (rmErr: Error) => {
+              rmErr ? reject(rmErr) : resolve();
+            });
+          }
         });
       }
     });

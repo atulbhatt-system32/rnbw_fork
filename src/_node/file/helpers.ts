@@ -12,6 +12,7 @@ import { THtmlElementsReferenceData } from "@_types/main";
 import {
   _createIDBDirectory,
   _path,
+  _removeIDBDirectoryOrFile,
   _writeIDBFile,
   TFileHandlerCollection,
   TFileHandlerInfoObj,
@@ -166,6 +167,7 @@ export const hostPublicDir = () => {
   Object.keys(PublicContentPaths).forEach((key) => {
     const dir = `/public/${key}`;
     try {
+      _removeIDBDirectoryOrFile(dir);
       _createIDBDirectory(dir);
     } catch (e) {
       console.error(e);
