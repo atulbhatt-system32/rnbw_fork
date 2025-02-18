@@ -6,12 +6,11 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { setReloadIframe } from '@_redux/main/designView';
+import { setReloadIframe } from "@_redux/main/designView";
 
 import { useDispatch, useSelector } from "react-redux";
 
 import { LogAllow } from "@src/rnbwTSX";
-import { PreserveRnbwNode } from "@_api/file/handlers";
 import { TNodeTreeData, TNodeUid } from "@_api/types";
 import { MainContext } from "@_redux/main";
 import { setIframeLoading } from "@_redux/main/designView";
@@ -73,24 +72,26 @@ export const IFrame = () => {
     onMouseOver,
   } = useMouseEvents();
 
-  const reloadIframe = useSelector((state: AppState) => state.main.designView.reloadIframe);
+  const reloadIframe = useSelector(
+    (state: AppState) => state.main.designView.reloadIframe,
+  );
 
-  useEffect(() => { // Debounce (150ms) prevents rapid reloads when the "R" key is pressed repeatedly.
+  useEffect(() => {
+    // Debounce (150ms) prevents rapid reloads when the "R" key is pressed repeatedly.
     const safeReloadIframe = debounce(() => {
       if (reloadIframe && iframeRefState?.contentWindow) {
         try {
           const currentSrc = iframeRefState.src;
-  
+
           if (iframeSrc && currentSrc !== iframeSrc) {
             iframeRefState.src = iframeSrc;
           } else {
             // Force reload by resetting the same src
             iframeRefState.src = currentSrc;
           }
-  
+
           dispatch(setReloadIframe(false));
           console.log("Iframe reload success!");
-
         } catch (error) {
           console.error("Iframe reload failed:", error);
           dispatch(setReloadIframe(false));
@@ -99,12 +100,11 @@ export const IFrame = () => {
     }, 150); // 150ms debounce delay
     safeReloadIframe();
 
-  return () => {
-    safeReloadIframe.cancel();
-  };
-}, [reloadIframe, iframeRefState, iframeSrc, dispatch]);
+    return () => {
+      safeReloadIframe.cancel();
+    };
+  }, [reloadIframe, iframeRefState, iframeSrc, dispatch]);
 
-  
   const addHtmlNodeEventListeners = useCallback(
     (htmlNode: HTMLElement) => {
       //NOTE: all the values required for the event listeners are stored in the eventListenersStatesRef because the event listeners are not able to access the latest values of the variables due to the closure of the event listeners
@@ -210,14 +210,13 @@ export const IFrame = () => {
       setIframeLoading(true);
       // add rnbw css
       const style = _document.createElement("style");
+      style.setAttribute("im-preserve", "true");
       style.textContent = styles;
-      style.setAttribute(PreserveRnbwNode, "true");
       headNode.appendChild(style);
 
       // add image-validator js
       const js = _document.createElement("script");
       js.setAttribute("image-validator", "true");
-      js.setAttribute(PreserveRnbwNode, "true");
       js.textContent = jss;
       headNode.appendChild(js);
 

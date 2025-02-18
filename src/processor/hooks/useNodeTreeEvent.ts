@@ -1,12 +1,10 @@
 import { useContext, useEffect, useRef } from "react";
-
-import morphdom from "morphdom";
 import { useDispatch } from "react-redux";
 
 import { getNodeUidByCodeSelection } from "@src/codeView";
 import { markSelectedElements } from "@src/designView/iFrame/helpers";
 import { LogAllow } from "@src/rnbwTSX";
-import { _writeIDBFile, PreserveRnbwNode, StageNodeIdAttr } from "@_api/file";
+import { _writeIDBFile } from "@_api/file";
 
 import { TNodeUid } from "@_api/types";
 import { MainContext } from "@_redux/main";
@@ -52,6 +50,8 @@ import { getObjKeys } from "@src/helper";
 import { getFileExtension } from "@src/sidebarView/navigatorPanel/helpers";
 import { useElementHelper } from "@_services/useElementsHelper";
 import { notify } from "@src/services/notificationService";
+// @ts-expect-error no types
+import Idiomorph from "idiomorph";
 
 export const useNodeTreeEvent = () => {
   const dispatch = useDispatch();
@@ -190,6 +190,7 @@ export const useNodeTreeEvent = () => {
           const iframe: HTMLIFrameElement | null = document.getElementById(
             "iframeId",
           ) as HTMLIFrameElement;
+
           if (iframe) {
             const iframeDoc = iframe.contentDocument;
             if (!iframeDoc) {
@@ -197,6 +198,8 @@ export const useNodeTreeEvent = () => {
               return;
             }
             const iframeHtml = iframeDoc.getElementsByTagName("html")[0];
+            const documentHtml = iframeDoc.documentElement;
+
             const updatedHtml = contentInApp;
             if (!iframeHtml || !updatedHtml) {
               dispatch(removeRunningAction());
@@ -204,136 +207,32 @@ export const useNodeTreeEvent = () => {
             }
 
             try {
+              // Parse the updatedHtml string into a DOM node
               const parser = new DOMParser();
               const newDoc = parser.parseFromString(
                 updatedHtml as string,
                 "text/html",
               );
 
-              let needsReload = false;
+              const newContent = newDoc.documentElement; // Get the root element
 
-              // Compare scripts and links
-              ["script", "link"].forEach((tagName) => {
-                const oldElements = iframeHtml.getElementsByTagName(tagName);
-                const oldElementsArray = Array.from(oldElements).filter(
-                  (el) => !el.hasAttribute(PreserveRnbwNode),
-                );
-
-                const newElements = newDoc.getElementsByTagName(tagName);
-                if (oldElementsArray.length !== newElements.length) {
-                  needsReload = true;
-                } else {
-                  for (let i = 0; i < oldElementsArray.length; i++) {
-                    const oldEl = oldElementsArray[i] as
-                      | HTMLScriptElement
-                      | HTMLLinkElement;
-                    const newEl = newElements[i] as
-                      | HTMLScriptElement
-                      | HTMLLinkElement;
-
-                    // Compare attributes except 'src' for scripts and 'href' for links
-                    const oldAttrs = Array.from(oldEl.attributes).filter(
-                      (attr) =>
-                        attr.name !== "rnbwdev-rnbw-element-select" &&
-                        attr.name !== "rnbwdev-rnbw-element-hover",
-                    );
-                    const newAttrs = Array.from(newEl.attributes).filter(
-                      (attr) =>
-                        attr.name !== "rnbwdev-rnbw-element-select" &&
-                        attr.name !== "rnbwdev-rnbw-element-hover",
-                    );
-
-                    if (oldAttrs.length !== newAttrs.length) {
-                      needsReload = true;
-                      break;
-                    }
-
-                    const isDifferent = oldAttrs.some((attr) => {
-                      if (attr.name === "src" || attr.name === "href") {
-                        // Compare only the path part of the URL, ignoring query parameters
-                        // const oldUrl = new URL(
-                        //   attr.value,
-                        //   window.location.origin,
-                        // );
-                        // const newUrl = new URL(
-                        //   newEl.getAttribute(attr.name) || "",
-                        //   window.location.origin,
-                        // );
-                        // return oldUrl.pathname !== newUrl.pathname;
+              // Now use newContent with Idiomorph
+              Idiomorph.morph(documentHtml, newContent.innerHTML, {
+                morphStyle: "innerHTML",
+                head: { style: "morph" },
+                callbacks: {
+                  beforeNodeRemoved: (node: Node) => {
+                    try {
+                      //@ts-expect-error node is not typed
+                      const isPreserve = node.getAttribute("im-preserve");
+                      if (isPreserve) {
                         return false;
                       }
-                      return attr.value !== newEl.getAttribute(attr.name);
-                    });
-
-                    if (isDifferent) {
-                      needsReload = true;
-                      break;
+                    } catch (err) {
+                      console.error(err);
                     }
-
-                    // For scripts, also compare the inline content
-                    if (
-                      tagName === "script" &&
-                      oldEl.innerHTML !== newEl.innerHTML
-                    ) {
-                      needsReload = true;
-                      break;
-                    }
-                  }
-                }
-              });
-              if (needsReload) {
-                // If we need to reload, update the iframe src
-                /*const iframeSrc = iframe.src.split("?")[0] + "?t=" + Date.now();
-                iframe.src = iframeSrc;*/
-                // TODO: on refresh button click
-              }
-              morphdom(iframeHtml, newDoc.documentElement, {
-                onBeforeElUpdated: function (fromEl, toEl) {
-                  // Skip updating script and link elements
-                  if (
-                    fromEl.nodeName === "SCRIPT" ||
-                    fromEl.nodeName === "LINK"
-                  ) {
-                    return false;
-                  }
-
-                  if (toEl.nodeName.includes("-")) return false;
-                  if (toEl.nodeName === "HTML") {
-                    //copy the attributes
-                    for (let i = 0; i < fromEl.attributes.length; i++) {
-                      toEl.setAttribute(
-                        fromEl.attributes[i].name,
-                        fromEl.attributes[i].value,
-                      );
-                    }
-                    if (fromEl.isEqualNode(toEl)) return false;
-                  }
-                  return true;
-                },
-                onBeforeNodeDiscarded: function (node: Node) {
-                  const elementNode = node as Element;
-                  let ifPreserveNode = false;
-                  if (elementNode.getAttribute) {
-                    const preserveAttr =
-                      elementNode.getAttribute(PreserveRnbwNode);
-                    const RnbwId = elementNode.getAttribute(StageNodeIdAttr);
-                    ifPreserveNode = !!preserveAttr || !RnbwId;
-                  }
-                  if (ifPreserveNode) {
-                    return false;
-                  }
-                  return true;
-                },
-                onElUpdated: function (el) {
-                  if (el.nodeName === "HTML") {
-                    //copy the attributes
-                    for (let i = 0; i < el.attributes.length; i++) {
-                      iframeHtml.setAttribute(
-                        el.attributes[i].name,
-                        el.attributes[i].value,
-                      );
-                    }
-                  }
+                    return true;
+                  },
                 },
               });
 
