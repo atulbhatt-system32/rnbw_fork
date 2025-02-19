@@ -44,6 +44,10 @@ export const NotificationContainer: React.FC<NotificationContainerProps> = ({
     setNotifications((prev) => prev.filter((notif) => notif.id !== id));
   }, []);
 
+  const clearParserErrors = useCallback(() => {
+    setNotifications((prev) => prev.filter((notif) => notif.type !== "error"));
+  }, []);
+
   useEffect(() => {
     eventEmitter.on("notification", addNotification);
     return () => {
@@ -51,6 +55,12 @@ export const NotificationContainer: React.FC<NotificationContainerProps> = ({
     };
   }, [addNotification]);
 
+  useEffect(() => {
+    eventEmitter.on("clearParserErrors", clearParserErrors);
+    return () => {
+      eventEmitter.off("clearParserErrors", clearParserErrors);
+    };
+  }, [clearParserErrors]);
   return (
     <div style={getPositionStyle(position)}>
       {notifications.map((notif) => (

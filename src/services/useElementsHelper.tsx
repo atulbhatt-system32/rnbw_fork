@@ -24,7 +24,6 @@ import {
   TNodePositionInfo,
   TNodeUid,
   TValidNodeUid,
-  ValidStageNodeUid,
 } from "@_api/index";
 import { RootNodeUid } from "@src/rnbwTSX";
 import { useDispatch } from "react-redux";
@@ -240,7 +239,9 @@ export const useElementHelper = () => {
       sourceCodeLocationInfo: true,
       onParseError: (err) => {
         const msg = err.code.split("-").join(" ");
+
         if (errorCount < 1) {
+          notify.clearParserErrors();
           notify.error("parse", msg, err);
           errorCount++;
         }
@@ -390,13 +391,6 @@ export const useElementHelper = () => {
         };
         if (!node.attrs) node.attrs = [];
         node.attrs.push({ name: StageNodeIdAttr, value: uid });
-        _isValidNode &&
-          validUid &&
-          node.attrs.push({ name: ValidStageNodeUid, value: `${validUid}` });
-        node.attrs.push({
-          name: DataSequencedUid,
-          value: nodeTree[uid].uniqueNodePath,
-        });
       };
 
       while (seedNodes.length) {

@@ -6,6 +6,10 @@ const emitNotification = (event: NotificationEvent) => {
   eventEmitter.emit("notification", event);
 };
 
+const emitClearParserErrorsNotification = () => {
+  eventEmitter.emit("clearParserErrors");
+};
+
 const notify = (notification: NotificationEvent) => {
   const { type, data, duration } = notification;
   if (type === "info") {
@@ -40,6 +44,10 @@ notify.error = (type: "parse", message: string, error: ParserError) => {
       error,
     },
   });
+};
+
+notify.clearParserErrors = () => {
+  emitClearParserErrorsNotification();
 };
 
 notify.suggestion = (message: string) => {
