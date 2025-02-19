@@ -5,6 +5,7 @@ import { TUpdateTreeViewStatePayload } from "../types";
 import { TNodeTreeReducerState } from "./types";
 import { TCodeSelection } from "@src/codeView";
 import { getValidNodeTree } from "@src/processor/helpers";
+import { ParserError } from "parse5";
 
 const nodeTreeReducerInitialState: TNodeTreeReducerState = {
   nodeTree: {},
@@ -20,6 +21,7 @@ const nodeTreeReducerInitialState: TNodeTreeReducerState = {
   },
   hoveredNodeUid: "",
   copiedNodeDisplayName: [],
+  parserErrors: [],
 };
 const nodeTreeSlice = createSlice({
   name: "nodeTree",
@@ -129,6 +131,19 @@ const nodeTreeSlice = createSlice({
       const copiedNodeDisplayName = action.payload;
       state.copiedNodeDisplayName = copiedNodeDisplayName;
     },
+    addParserError(state, action: PayloadAction<ParserError>) {
+      const parserError = action.payload;
+      state.parserErrors.push(parserError);
+    },
+    removeParserError(state, action: PayloadAction<ParserError>) {
+      const parserError = action.payload;
+      state.parserErrors = state.parserErrors.filter(
+        (error) => error !== parserError,
+      );
+    },
+    clearParserErrors(state) {
+      state.parserErrors = [];
+    },
   },
 });
 export const {
@@ -146,5 +161,8 @@ export const {
   setHoveredNodeUid,
   clearNodeTreeViewState,
   setCopiedNodeDisplayName,
+  addParserError,
+  removeParserError,
+  clearParserErrors,
 } = nodeTreeSlice.actions;
 export const NodeTreeReducer = nodeTreeSlice.reducer;

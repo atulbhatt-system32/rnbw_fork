@@ -221,10 +221,10 @@ export const useNodeTreeEvent = () => {
                 morphStyle: "innerHTML",
                 head: { style: "morph" },
                 callbacks: {
-                  beforeNodeRemoved: (node: Node) => {
+                  beforeNodeRemoved: (node: Element) => {
                     try {
-                      //@ts-expect-error node is not typed
                       const isPreserve = node.getAttribute("im-preserve");
+
                       if (isPreserve) {
                         return false;
                       }
@@ -232,6 +232,22 @@ export const useNodeTreeEvent = () => {
                       console.error(err);
                     }
                     return true;
+                  },
+                  beforeNodeMorphed: (oldNode: Element, newNode: Node) => {
+                    // Handle custom elements specifically
+                    try {
+                      if (
+                        oldNode.tagName.includes("-") ||
+                        (newNode instanceof HTMLElement &&
+                          newNode.tagName.includes("-"))
+                      ) {
+                        // Custom logic for web components
+                        return false; // Prevent morphing if necessary
+                      }
+                      return true;
+                    } catch (err) {
+                      console.error(err);
+                    }
                   },
                 },
               });

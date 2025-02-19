@@ -1,13 +1,17 @@
 import * as monaco from "monaco-editor";
 import { SVGIcon } from "@src/components";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   ErrorNotificationData,
   InfoNotificationData,
   NotificationEvent,
 } from "@src/types/notification.types";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { AppState } from "@src/_redux/_root";
+import {
+  addParserError,
+  removeParserError,
+} from "@src/_redux/main/nodeTree/slice";
 
 interface NotificationProps extends NotificationEvent {
   id: string;
@@ -20,6 +24,7 @@ export const Notification: React.FC<NotificationProps> = ({
   data,
   removeNotification,
 }) => {
+  const dispatch = useDispatch();
   const { editorInstance } = useSelector(
     (state: AppState) => state.main.editor,
   );
@@ -76,6 +81,20 @@ export const Notification: React.FC<NotificationProps> = ({
     removeNotification(id);
   }, [editorInstance, type, data, id, removeNotification]);
 
+  useEffect(() => {
+    const errorData = data as ErrorNotificationData;
+    if (errorData.type !== "parse") return;
+
+    const error = errorData.error;
+    if (!error) return;
+
+    if (type === "error") {
+      dispatch(addParserError(error));
+    }
+    return () => {
+      dispatch(removeParserError(error));
+    };
+  }, [data, type, dispatch]);
   return (
     <div className="radius-s background-primary padding-m gap-s align-center box box-l shadow animate duration-normal ease-in">
       <SVGIcon name={getToastIcon()} prefix="raincons" className="icon-xs" />
