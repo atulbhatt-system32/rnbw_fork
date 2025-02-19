@@ -29,7 +29,7 @@ import {
   setNodeTree,
   setSelectedNodeUids,
 } from "@_redux/main/nodeTree";
-import { setIframeSrc } from "@_redux/main/designView";
+
 import { useAppState } from "@_redux/useAppState";
 
 import {
@@ -52,6 +52,7 @@ import { useElementHelper } from "@_services/useElementsHelper";
 import { notify } from "@src/services/notificationService";
 // @ts-expect-error no types
 import Idiomorph from "idiomorph";
+import { setCurrentPage } from "@src/_redux/main/currentPage.slice";
 
 export const useNodeTreeEvent = () => {
   const dispatch = useDispatch();
@@ -159,9 +160,11 @@ export const useNodeTreeEvent = () => {
       // update idb
 
       try {
+        //creating the preview for stage-view
         const previewPath = getPreviewPath(fileTree, file);
         try {
           dispatch(setDoingFileAction(true));
+
           await _writeIDBFile(previewPath, fileData.contentInApp as string);
         } catch (err) {
           console.log(err);
@@ -169,7 +172,15 @@ export const useNodeTreeEvent = () => {
           dispatch(setDoingFileAction(false));
         }
         if (fileData.ext === "html") {
-          dispatch(setIframeSrc(`rnbw${previewPath}`));
+          dispatch(
+            setCurrentPage({
+              uid: currentFileUid,
+              previewPath: fileData.path,
+              previewUrl: `rnbw${previewPath}`,
+              previewContent: fileData.contentInApp,
+              nodeTree: nodeTree,
+            }),
+          );
         }
       } catch (err) {
         notify.info(

@@ -1,5 +1,4 @@
 export type TDesignViewReducerState = {
-  iframeSrc: string | null;
   iframeLoading: boolean;
   linkToOpen: string | null;
   syncConfigs: DesignViewSyncConfigs;

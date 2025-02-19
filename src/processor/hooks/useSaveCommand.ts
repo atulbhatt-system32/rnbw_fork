@@ -72,13 +72,6 @@ export const useSaveCommand = () => {
         await saveFileContent(project, fileHandlers, currentFileUid, fileData);
         if (fileData?.ext === "css") {
           refreshStageCSS();
-        } else if (fileData?.ext === "js") {
-          //replace iframe src
-          //If we need to reload, update the iframe src TODO: on refresh button click
-          /*const iframe = iframeRefRef.current;
-          if (!iframe) return;
-          const iframeSrc = iframe.src.split("?")[0] + "?t=" + Date.now();
-          iframe.src = iframeSrc;*/
         }
       } catch (err) {
         notify.info("error", "An error occurred while saving the file");

@@ -51,7 +51,7 @@ export const useAppState = () => {
         },
         future: nodeEventFuture,
       },
-      designView: { iframeSrc, iframeLoading, linkToOpen, syncConfigs },
+      designView: { iframeLoading, linkToOpen, syncConfigs },
       codeView: {
         editingNodeUid: editingNodeUidInCodeView,
         codeViewTabSize,
@@ -149,7 +149,6 @@ export const useAppState = () => {
     nodeEventFuture,
     nodeEventFutureLength,
 
-    iframeSrc,
     iframeLoading,
     linkToOpen,
     syncConfigs,

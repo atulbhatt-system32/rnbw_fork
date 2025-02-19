@@ -3,7 +3,6 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DesignViewSyncConfigs, TDesignViewReducerState } from "./types";
 
 const DesignViewReducerInitialState: TDesignViewReducerState = {
-  iframeSrc: null,
   iframeLoading: false,
   linkToOpen: null,
   syncConfigs: {},
@@ -12,10 +11,6 @@ const DesignViewSlice = createSlice({
   name: "DesignView",
   initialState: DesignViewReducerInitialState,
   reducers: {
-    setIframeSrc(state, actions: PayloadAction<string | null>) {
-      const iframeSrc = actions.payload;
-      state.iframeSrc = iframeSrc;
-    },
     setIframeLoading(state, actions: PayloadAction<boolean>) {
       const iframeLoading = actions.payload;
       state.iframeLoading = iframeLoading;
@@ -31,6 +26,6 @@ const DesignViewSlice = createSlice({
   },
 });
 
-export const { setIframeSrc, setIframeLoading, setLinkToOpen, setSyncConfigs } =
+export const { setIframeLoading, setLinkToOpen, setSyncConfigs } =
   DesignViewSlice.actions;
 export const DesignViewReducer = DesignViewSlice.reducer;

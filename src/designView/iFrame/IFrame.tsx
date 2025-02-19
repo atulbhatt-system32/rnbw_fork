@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { LogAllow } from "@src/rnbwTSX";
 import { TNodeTreeData, TNodeUid } from "@_api/types";
@@ -21,6 +21,7 @@ import { useCmdk, useMouseEvents, useSyncNode } from "./hooks";
 
 import { debounce } from "lodash";
 import eventEmitter from "@src/services/eventEmitter";
+import { AppState } from "@src/_redux/_root";
 
 type AppStateReturnType = ReturnType<typeof useAppState>;
 export interface eventListenersStatesRefType extends AppStateReturnType {
@@ -42,8 +43,10 @@ export const IFrame = () => {
   const isEditingRef = useRef(false);
   const dispatch = useDispatch();
   const appState: AppStateReturnType = useAppState();
-  const { nodeTree, project, validNodeTree, iframeSrc, renderableFileUid } =
-    appState;
+  const { nodeTree, project, validNodeTree, renderableFileUid } = appState;
+  const currentPagePreviewUrl = useSelector(
+    (state: AppState) => state.main.currentPage.previewUrl,
+  );
   const { iframeRefRef, setIframeRefRef, contentEditableUidRef } =
     useContext(MainContext);
   // hooks
@@ -78,14 +81,16 @@ export const IFrame = () => {
         try {
           const currentSrc = iframeRefState.src;
 
-          if (iframeSrc && currentSrc !== iframeSrc) {
-            iframeRefState.src = iframeSrc;
+          /*
+          iframeSrc is the src of the iframe in the redux store
+          currentSrc is the src of the iframe in the html
+          */
+          if (currentPagePreviewUrl && currentSrc !== currentPagePreviewUrl) {
+            iframeRefState.src = currentPagePreviewUrl;
           } else {
             // Force reload by resetting the same src
             iframeRefState.src = currentSrc;
           }
-
-          console.log("Iframe reload success!");
         } catch (error) {
           console.error("Iframe reload failed:", error);
         }
@@ -106,7 +111,7 @@ export const IFrame = () => {
       eventEmitter.off("project", handleProjectEvent);
       debouncedReloadIframe.cancel();
     };
-  }, [iframeRefState, iframeSrc, dispatch]);
+  }, [iframeRefState, currentPagePreviewUrl, dispatch]);
 
   const addHtmlNodeEventListeners = useCallback(
     (htmlNode: HTMLElement) => {
@@ -341,12 +346,12 @@ export const IFrame = () => {
   return useMemo(() => {
     return (
       <>
-        {iframeSrc && (
+        {currentPagePreviewUrl && (
           <iframe
             key={renderableFileUid}
             ref={setIframeRefState}
             id={"iframeId"}
-            src={iframeSrc}
+            src={currentPagePreviewUrl}
             style={{
               background: "white",
               width: "100%",
@@ -356,5 +361,5 @@ export const IFrame = () => {
         )}
       </>
     );
-  }, [iframeSrc]);
+  }, [currentPagePreviewUrl]);
 };

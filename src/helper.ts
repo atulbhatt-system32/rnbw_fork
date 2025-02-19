@@ -18,7 +18,7 @@ import {
   NodeTree_Event_JumpToPastActionType,
   setCurrentFileUid,
 } from "@_redux/main/nodeTree/event";
-import { setIframeSrc } from "@_redux/main/designView";
+
 import {
   TCmdkGroupData,
   TCmdkKeyMap,
@@ -38,6 +38,7 @@ import { NavigateFunction } from "react-router-dom";
 import { TFilesReference } from "@rnbws/rfrncs.design";
 import { FileNode } from "@_redux/main";
 import { notify } from "./services/notificationService";
+import { resetCurrentPage } from "./_redux/main/currentPage.slice";
 
 export const addDefaultCmdkActions = (
   cmdkReferenceData: TCmdkReferenceData,
@@ -170,7 +171,7 @@ export const clearFileSession = (dispatch: Dispatch<AnyAction>) => {
   dispatch({ type: NodeTree_Event_ClearActionType });
   dispatch({ type: NodeTree_Event_JumpToPastActionType, payload: 0 });
 
-  dispatch(setIframeSrc(null));
+  dispatch(resetCurrentPage());
 };
 export const getKeyObjectsFromCommand = (command: TCmdkReference) => {
   const shortcuts = (command["Keyboard Shortcut"] as string)?.split(" ");
