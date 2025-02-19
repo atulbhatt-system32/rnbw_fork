@@ -23,7 +23,7 @@ import { PanelHeader } from "@src/sidebarView/panelHeader";
 import IconButton from "@src/components/IconButton/IconButton";
 import { useDispatch } from "react-redux";
 import { setCmdkPages } from "@src/_redux/main/cmdk";
-import { setReloadIframe } from "@src/_redux/main/designView";
+import projectService from "@src/services/projectService";
 
 export default function NavigatorPanel() {
   const {
@@ -102,7 +102,7 @@ export default function NavigatorPanel() {
   };
 
   const handleReload = () => {
-    dispatch(setReloadIframe(true));
+    projectService.reloadPage();
   };
 
   useEffect(() => {

@@ -29,7 +29,8 @@ import { TCmdkKeyMap, TCmdkReferenceData } from "@src/types";
 
 import { setSystemTheme } from "../helper";
 import useRnbw from "@_services/useRnbw";
-import { setReloadIframe } from "@src/_redux/main/designView";
+
+import projectService from "@src/services/projectService";
 
 interface IUseCmdk {
   cmdkReferenceData: TCmdkReferenceData;
@@ -106,7 +107,7 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
 
   const handleReload = useCallback(() => {
     if (cmdkOpen) return;
-    dispatch(setReloadIframe(true));
+    projectService.reloadPage();
   }, [cmdkOpen]);
   const onAdd = useCallback(() => {
     dispatch(setCmdkPages([...cmdkPages, "Add"]));

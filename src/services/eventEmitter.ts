@@ -1,7 +1,9 @@
-import { NotificationEvent } from "@src/types";
+import { NotificationEvent, ProjectEvent } from "@src/types";
 
 type EventMap = {
   notification: [NotificationEvent];
+  clearParserErrors: [];
+  project: [ProjectEvent];
   [key: string]: unknown[];
 };
 
@@ -29,7 +31,6 @@ class EventEmitter {
   }
 
   emit<K extends keyof EventMap>(event: K, ...args: EventMap[K]): void {
-    console.log("EventEmitter emit:", event, args);
     if (!this.events[event]) return;
     this.events[event]?.forEach((listener) => {
       try {

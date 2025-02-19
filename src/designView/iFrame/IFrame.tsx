@@ -6,9 +6,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { setReloadIframe } from "@_redux/main/designView";
 
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import { LogAllow } from "@src/rnbwTSX";
 import { TNodeTreeData, TNodeUid } from "@_api/types";
@@ -19,8 +18,9 @@ import { useAppState } from "@_redux/useAppState";
 import { jss, styles } from "./constants";
 import { markSelectedElements } from "./helpers";
 import { useCmdk, useMouseEvents, useSyncNode } from "./hooks";
-import { AppState } from "@src/_redux/_root";
+
 import { debounce } from "lodash";
+import eventEmitter from "@src/services/eventEmitter";
 
 type AppStateReturnType = ReturnType<typeof useAppState>;
 export interface eventListenersStatesRefType extends AppStateReturnType {
@@ -72,14 +72,9 @@ export const IFrame = () => {
     onMouseOver,
   } = useMouseEvents();
 
-  const reloadIframe = useSelector(
-    (state: AppState) => state.main.designView.reloadIframe,
-  );
-
   useEffect(() => {
-    // Debounce (150ms) prevents rapid reloads when the "R" key is pressed repeatedly.
-    const safeReloadIframe = debounce(() => {
-      if (reloadIframe && iframeRefState?.contentWindow) {
+    const reloadIframeSrc = () => {
+      if (iframeRefState?.contentWindow) {
         try {
           const currentSrc = iframeRefState.src;
 
@@ -90,20 +85,28 @@ export const IFrame = () => {
             iframeRefState.src = currentSrc;
           }
 
-          dispatch(setReloadIframe(false));
           console.log("Iframe reload success!");
         } catch (error) {
           console.error("Iframe reload failed:", error);
-          dispatch(setReloadIframe(false));
         }
       }
-    }, 150); // 150ms debounce delay
-    safeReloadIframe();
+    };
+
+    const debouncedReloadIframe = debounce(reloadIframeSrc, 150);
+
+    const handleProjectEvent = (projectEvent: string) => {
+      if (projectEvent === "reloadPage") {
+        debouncedReloadIframe();
+      }
+    };
+
+    eventEmitter.on("project", handleProjectEvent);
 
     return () => {
-      safeReloadIframe.cancel();
+      eventEmitter.off("project", handleProjectEvent);
+      debouncedReloadIframe.cancel();
     };
-  }, [reloadIframe, iframeRefState, iframeSrc, dispatch]);
+  }, [iframeRefState, iframeSrc, dispatch]);
 
   const addHtmlNodeEventListeners = useCallback(
     (htmlNode: HTMLElement) => {
