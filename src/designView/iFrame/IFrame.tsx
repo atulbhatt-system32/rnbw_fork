@@ -22,6 +22,7 @@ import { useCmdk, useMouseEvents, useSyncNode } from "./hooks";
 import { debounce } from "lodash";
 import eventEmitter from "@src/services/eventEmitter";
 import { AppState } from "@src/_redux/_root";
+import { ProjectEvent } from "@src/types";
 
 type AppStateReturnType = ReturnType<typeof useAppState>;
 export interface eventListenersStatesRefType extends AppStateReturnType {
@@ -99,8 +100,8 @@ export const IFrame = () => {
 
     const debouncedReloadIframe = debounce(reloadIframeSrc, 150);
 
-    const handleProjectEvent = (projectEvent: string) => {
-      if (projectEvent === "reloadPage") {
+    const handleProjectEvent = (projectEvent: ProjectEvent) => {
+      if (projectEvent.type === "reloadPage") {
         debouncedReloadIframe();
       }
     };
