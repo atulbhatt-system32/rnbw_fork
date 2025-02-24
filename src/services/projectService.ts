@@ -1,30 +1,33 @@
 import { ProjectEvent } from "@src/types";
 import eventEmitter from "./eventEmitter";
+import { TFileNodeTreeData } from "@src/api";
 
-const project = (project: ProjectEvent) => {
-  switch (project) {
-    case "reloadPage":
-      eventEmitter.emit("project", "reloadPage");
-      break;
-    case "getProject":
-      eventEmitter.emit("project", "getProject");
-      break;
-    case "reloadProject":
-      eventEmitter.emit("project", "reloadProject");
-      break;
+const project = (projectEvent: ProjectEvent) => {
+  const { type } = projectEvent;
+  if (type === "reloadPage") {
+    eventEmitter.emit("project", projectEvent);
+  } else if (type === "openFile") {
+    eventEmitter.emit("project", projectEvent);
   }
 };
 
-project.getProject = () => {
-  eventEmitter.emit("project", "getProject");
-};
-
-project.reloadProject = () => {
-  eventEmitter.emit("project", "reloadProject");
-};
-
 project.reloadPage = () => {
-  eventEmitter.emit("project", "reloadPage");
+  eventEmitter.emit("project", {
+    type: "reloadPage",
+    data: {
+      message: "Reloading page",
+    },
+  });
+};
+
+project.openFile = (uid: string, fileTree: TFileNodeTreeData) => {
+  eventEmitter.emit("project", {
+    type: "openFile",
+    data: {
+      fileUid: uid,
+      fileTree: fileTree,
+    },
+  });
 };
 
 export default project;
