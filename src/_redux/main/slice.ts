@@ -15,7 +15,7 @@ import createWebStorage from "redux-persist/es/storage/createWebStorage";
 import { DesignViewReducer } from "./designView";
 
 import editorReducer from "./editorSlice";
-import currentPageReducer from "./currentPage.slice";
+import currentPageReducer from "./currentPage/currentPage.slice";
 
 export function createPersistStore() {
   const isServer = typeof window === "undefined";
