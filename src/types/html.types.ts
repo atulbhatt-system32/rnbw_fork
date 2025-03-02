@@ -1,9 +1,18 @@
-export type HtmlEventType = "morph";
+interface TreeNodeData {
+  canMove?: boolean;
+  canRename?: boolean;
+  children: string[];
+  isFolder: boolean;
+  index: string;
+  data: {
+    nodeName: string;
+    attributes: Record<string, string | number | boolean | null>[];
+    parentId: string;
+  };
+}
 
-export interface HTMLMorphEventData {
-  morphContent: string;
+interface TreeStructure {
+  [key: string]: TreeNodeData;
 }
-export interface HtmlEvent {
-  type: HtmlEventType;
-  data: HTMLMorphEventData;
-}
+
+export type { TreeNodeData, TreeStructure };
