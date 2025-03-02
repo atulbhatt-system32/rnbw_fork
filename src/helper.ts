@@ -38,7 +38,7 @@ import { NavigateFunction } from "react-router-dom";
 import { TFilesReference } from "@rnbws/rfrncs.design";
 import { FileNode } from "@_redux/main";
 import { notify } from "./services/notificationService";
-import { resetCurrentPage } from "./_redux/main/currentPage.slice";
+import { resetCurrentPage } from "./_redux/main/currentPage/currentPage.slice";
 
 export const addDefaultCmdkActions = (
   cmdkReferenceData: TCmdkReferenceData,
