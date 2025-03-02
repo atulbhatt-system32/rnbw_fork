@@ -3,7 +3,11 @@ import { parse } from "parse5";
 import { Document } from "parse5/dist/tree-adapters/default";
 import { notify } from "./notificationService";
 import { TreeNodeData, TreeStructure } from "@src/types/html.types";
+import { StageNodeIdAttr } from "@src/api";
 
+interface HtmlNode extends Element {
+  attrs: { name: string; value: string }[];
+}
 function parseHtml(html: string) {
   const document = parse(html, {
     sourceCodeLocationInfo: true,
@@ -65,7 +69,7 @@ function createNodeTree(document: Document): {
   };
   //traverse the root node
   function traverseNode(
-    node: Element,
+    node: HtmlNode,
     currentNode: TreeNodeData,
     parentId: string,
   ) {
@@ -81,13 +85,18 @@ function createNodeTree(document: Document): {
 
     currentNode.children.push(nodeUid);
     complexNodeTree[parentId].children.push(nodeUid);
+
     const attributes = [];
-    if (node.attributes) {
-      for (const attr of node.attributes) {
+    if (node.attrs) {
+      for (const attr of node.attrs) {
         attributes.push({
           [attr.name]: attr.value,
         });
       }
+      node.attrs.push({
+        name: StageNodeIdAttr,
+        value: nodeUid,
+      });
     }
 
     // Check if node only has text children
@@ -126,7 +135,7 @@ function createNodeTree(document: Document): {
     if (node && node.childNodes && node.childNodes.length > 0) {
       node.childNodes.forEach((child) => {
         traverseNode(
-          child as unknown as Element,
+          child as unknown as HtmlNode,
           //@ts-expect-error - allow indexing with a string
           currentNode[nodeUid],
           nodeUid,
@@ -136,12 +145,32 @@ function createNodeTree(document: Document): {
   }
 
   traverseNode(
-    rootNode as unknown as Element,
+    rootNode as unknown as HtmlNode,
     complexTreeTemplate[RootNodeUid],
     RootNodeUid,
   );
 
-  return { complexNodeTree, document };
+  return {
+    complexNodeTree,
+    document,
+  };
+}
+
+function getInitialExpandedNodesFromNodeTree(nodeTree: TreeStructure) {
+  const htmlNodeUid = Object.keys(nodeTree).find((key) =>
+    key.toLowerCase().startsWith("html"),
+  );
+  const bodyNodeUid = Object.keys(nodeTree).find((key) =>
+    key.toLowerCase().startsWith("body"),
+  );
+  const initialExpandedNodes: string[] = [];
+  initialExpandedNodes.push(RootNodeUid);
+
+  if (htmlNodeUid && bodyNodeUid) {
+    initialExpandedNodes.push(htmlNodeUid);
+    initialExpandedNodes.push(bodyNodeUid);
+  }
+  return initialExpandedNodes;
 }
 
 function createPreviewContent() {
@@ -149,8 +178,63 @@ function createPreviewContent() {
   return previewContent;
 }
 
+function clearSelectedElements() {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const selectedElements = iframe?.contentWindow?.document.querySelectorAll(
+    `[rnbwdev-rnbw-element-select]`,
+  );
+  selectedElements?.forEach((ele) => {
+    ele.removeAttribute("rnbwdev-rnbw-element-select");
+  });
+}
+
+function scrollToElement(uid: string) {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const element = iframe?.contentWindow?.document?.querySelector(
+    `[${StageNodeIdAttr}="${uid}"]`,
+  );
+  element?.scrollIntoView({ behavior: "smooth" });
+}
+
+function isElementWebComponent(element: Element): boolean {
+  // Check if element name contains a hyphen (standard convention for custom elements)
+  const hasHyphen = element.tagName.includes("-");
+
+  // Check if element has a shadow root (another key characteristic of many web components)
+  const hasShadowRoot = !!element.shadowRoot;
+
+  // Check if element is registered as a custom element
+  const isCustomElement =
+    customElements.get(element.tagName.toLowerCase()) !== undefined;
+
+  return hasHyphen || hasShadowRoot || isCustomElement;
+}
+
+function markSelectedElements(uids: string[]) {
+  //find all the elements which are already selected and make them unselected
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  clearSelectedElements();
+
+  uids.map((uid) => {
+    // if it's a web component, should select its first child element
+    let selectedElement = iframe?.contentWindow?.document?.querySelector(
+      `[${StageNodeIdAttr}="${uid}"]`,
+    );
+
+    //check if the element is a web component
+    const isWebComponent = isElementWebComponent(selectedElement as Element);
+    if (isWebComponent) {
+      selectedElement = selectedElement?.firstElementChild;
+    }
+    selectedElement?.setAttribute("rnbwdev-rnbw-element-select", "");
+  });
+}
+
 export default {
   parseHtml,
   createNodeTree,
   createPreviewContent,
+  getInitialExpandedNodesFromNodeTree,
+  markSelectedElements,
+  scrollToElement,
 };
