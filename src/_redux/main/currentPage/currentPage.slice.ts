@@ -7,10 +7,12 @@ interface CurrentPageState {
   content: string;
   nodeTree: TNodeTreeData;
   newNodeTree: TreeStructure;
-  previewPath: string;
-  previewUrl: string | null;
-  previewContent: string;
   updateType: "load" | "type" | "morph";
+  designViewState: {
+    previewPath: string;
+    previewUrl: string | null;
+    previewContent: string;
+  };
   nodeTreeViewState: {
     selectedNodeUids: string[];
     focusedNodeUid: string;
@@ -29,9 +31,11 @@ const initialState: CurrentPageState = {
   uid: "",
   content: "",
   nodeTree: {},
-  previewPath: "",
-  previewUrl: null,
-  previewContent: "",
+  designViewState: {
+    previewPath: "",
+    previewUrl: null,
+    previewContent: "",
+  },
   updateType: "load",
   newNodeTree: {},
   nodeTreeViewState: {
@@ -59,13 +63,13 @@ const currentPageSlice = createSlice({
       state.nodeTree = action.payload;
     },
     setCurrentPagePreviewPath(state, action: PayloadAction<string>) {
-      state.previewPath = action.payload;
+      state.designViewState.previewPath = action.payload;
     },
     setCurrentPagePreviewUrl(state, action: PayloadAction<string>) {
-      state.previewUrl = action.payload;
+      state.designViewState.previewUrl = action.payload;
     },
     setCurrentPagePreviewContent(state, action: PayloadAction<string>) {
-      state.previewContent = action.payload;
+      state.designViewState.previewContent = action.payload;
     },
     setCurrentPageUid(state, action: PayloadAction<string>) {
       state.uid = action.payload;
