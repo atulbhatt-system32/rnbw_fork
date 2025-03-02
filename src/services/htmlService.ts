@@ -193,7 +193,13 @@ function scrollToElement(uid: string) {
   const element = iframe?.contentWindow?.document?.querySelector(
     `[${StageNodeIdAttr}="${uid}"]`,
   );
-  element?.scrollIntoView({ behavior: "smooth" });
+  if (element) {
+    element.scrollIntoView({
+      block: "nearest",
+      inline: "start",
+      behavior: "auto",
+    });
+  }
 }
 
 function isElementWebComponent(element: Element): boolean {
