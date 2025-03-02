@@ -1,10 +1,9 @@
-import { NotificationEvent, ProjectEvent, HtmlEvent } from "@src/types";
+import { NotificationEvent, ProjectEvent } from "@src/types";
 
 type EventMap = {
   notification: [NotificationEvent];
   clearParserErrors: [];
   project: [ProjectEvent];
-  html: [HtmlEvent];
   [key: string]: unknown[];
 };
 
