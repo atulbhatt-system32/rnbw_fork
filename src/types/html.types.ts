@@ -1,3 +1,7 @@
+interface HtmlNode extends Element {
+  attrs: { name: string; value: string }[];
+}
+
 interface TreeNodeData {
   canMove?: boolean;
   canRename?: boolean;
@@ -15,4 +19,4 @@ interface TreeStructure {
   [key: string]: TreeNodeData;
 }
 
-export type { TreeNodeData, TreeStructure };
+export type { TreeNodeData, TreeStructure, HtmlNode };
