@@ -2,7 +2,7 @@ import { useCallback, useEffect } from "react";
 
 import { CustomDirectoryPickerOptions } from "file-system-access/lib/showDirectoryPicker";
 import { del } from "idb-keyval";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 import { LogAllow } from "@src/rnbwTSX";
@@ -12,17 +12,11 @@ import {
   downloadIDBProject,
   initIDBProject,
 } from "@_api/index";
-import { setTheme } from "@_redux/global";
+import { setShowCodePanel, setShowTreePanel, setTheme } from "@_redux/global";
 import { setCmdkPages, setCurrentCommand } from "@_redux/main/cmdk";
 import { setDoingFileAction, TProjectContext } from "@_redux/main/fileTree";
 
-import {
-  setActivePanel,
-  setAutoSave,
-  setShowActionsPanel,
-  setShowCodeView,
-  setWordWrap,
-} from "@_redux/main/processor";
+import { setAutoSave, setWordWrap } from "@_redux/main/processor";
 import { useAppState } from "@_redux/useAppState";
 import { getCommandKey } from "../rnbw";
 import { TCmdkKeyMap, TCmdkReferenceData } from "@src/types";
@@ -31,6 +25,8 @@ import { setSystemTheme } from "../helper";
 import useRnbw from "@_services/useRnbw";
 
 import projectService from "@src/services/projectService";
+import { AppState } from "@src/_redux/store";
+import globalService from "@src/services/global.service";
 
 interface IUseCmdk {
   cmdkReferenceData: TCmdkReferenceData;
@@ -51,17 +47,17 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
     doingFileAction,
     iframeLoading,
     activePanel,
-    showActionsPanel,
-    showCodeView,
     autoSave,
     wordWrap,
     cmdkOpen,
     cmdkPages,
     currentCommand,
     runningAction,
-    showFilePanel,
   } = useAppState();
 
+  const { showCodePanel, showTreePanel, showFileTree } = useSelector(
+    (state: AppState) => state.global.panelsState,
+  );
   const rnbw = useRnbw();
   // handlers
   const onClear = useCallback(async () => {
@@ -125,7 +121,7 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
   }, [project]);
   const onUndo = () => {
     if (!!runningAction || doingFileAction || iframeLoading) return;
-    if (activePanel === "file" && showActionsPanel && showFilePanel) {
+    if (activePanel === "file" && showTreePanel && showFileTree) {
       rnbw.files.undo();
     } else {
       rnbw.elements.undo();
@@ -134,18 +130,18 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
   const onRedo = () => {
     if (!!runningAction || doingFileAction || iframeLoading) return;
 
-    if (activePanel === "file" && showActionsPanel && showFilePanel) {
+    if (activePanel === "file" && showTreePanel && showFileTree) {
       rnbw.files.redo();
     } else {
       rnbw.elements.redo();
     }
   };
   const onToggleCodeView = useCallback(() => {
-    dispatch(setShowCodeView(!showCodeView));
-  }, [showCodeView]);
+    dispatch(setShowCodePanel(!showCodePanel));
+  }, [showCodePanel]);
   const onToggleActionsPanel = useCallback(() => {
-    dispatch(setShowActionsPanel(!showActionsPanel));
-  }, [showActionsPanel]);
+    dispatch(setShowTreePanel(!showTreePanel));
+  }, [showTreePanel]);
   const onOpenGuidePage = useCallback(() => {
     window.open("https://guide.rnbw.dev", "_blank", "noreferrer");
   }, []);
@@ -189,26 +185,6 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
     dispatch(setWordWrap(!wordWrap));
   }, [wordWrap]);
 
-  const closeAllPanel = useCallback(() => {
-    dispatch(setShowActionsPanel(false));
-    dispatch(setShowCodeView(false));
-    //focus on stage
-    dispatch(setActivePanel("stage"));
-    const iframe: HTMLIFrameElement | null = document.getElementById(
-      "iframeId",
-    ) as HTMLIFrameElement;
-    if (iframe) {
-      const contentWindow = iframe.contentWindow;
-      if (contentWindow) {
-        contentWindow.focus();
-      }
-    }
-  }, []);
-
-  const openAllPanel = useCallback(() => {
-    dispatch(setShowActionsPanel(true));
-    dispatch(setShowCodeView(true));
-  }, []);
   const onSearch = useCallback(() => {
     if (cmdkOpen) return;
     dispatch(setCmdkPages(["Search"]));
@@ -237,8 +213,12 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
           )
             return;
         }
-        !cmdkOpen && (showActionsPanel || showCodeView) && closeAllPanel();
-        !cmdkOpen && !showActionsPanel && !showCodeView && openAllPanel();
+        !cmdkOpen &&
+          globalService.togglePanels({
+            showCodePanel,
+            showTreePanel,
+          });
+
         return;
       }
       // skip inline rename input in file-tree-view
@@ -296,7 +276,14 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
 
       action && e.preventDefault();
     },
-    [osType, cmdkOpen, activePanel, cmdkReferenceData],
+    [
+      osType,
+      cmdkOpen,
+      activePanel,
+      cmdkReferenceData,
+      showCodePanel,
+      showTreePanel,
+    ],
   );
   useEffect(() => {
     document.addEventListener("keydown", KeyDownEventListener);
@@ -313,8 +300,8 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
         break;
       case "New":
         onNew();
-        dispatch(setShowActionsPanel(true));
-        dispatch(setShowCodeView(true));
+        dispatch(setShowTreePanel(true));
+        dispatch(setShowCodePanel(true));
         break;
       case "Open":
         onOpen();

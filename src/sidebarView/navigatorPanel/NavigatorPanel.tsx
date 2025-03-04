@@ -21,9 +21,10 @@ import { useFavicon, useNavigatorPanelHandlers } from "./hooks";
 import { PanelButton } from "./components/PanelButton";
 import { PanelHeader } from "@src/sidebarView/panelHeader";
 import IconButton from "@src/components/IconButton/IconButton";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setCmdkPages } from "@src/_redux/main/cmdk";
 import projectService from "@src/services/projectService";
+import { AppState } from "@src/_redux/store";
 
 export default function NavigatorPanel() {
   const {
@@ -35,10 +36,12 @@ export default function NavigatorPanel() {
     fileTree,
     currentFileUid,
     filesReferenceData,
-    showFilePanel,
     cmdkPages,
     cmdkOpen,
   } = useAppState();
+  const { showFileTree } = useSelector(
+    (state: AppState) => state.global.panelsState,
+  );
 
   const { importProject } = useContext(MainContext);
 
@@ -150,7 +153,7 @@ export default function NavigatorPanel() {
             <IconButton iconName="emoji" onClick={onJumpstart} />
 
             <span className="text-s opacity-m">/</span>
-            {showFilePanel ? (
+            {showFileTree ? (
               <ProjectPanel unsavedProject={unsavedProject} />
             ) : (
               <DefaultPanel />
@@ -198,6 +201,6 @@ export default function NavigatorPanel() {
     unsavedProject,
     theme,
     faviconFallback,
-    showFilePanel,
+    showFileTree,
   ]);
 }

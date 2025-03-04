@@ -1,7 +1,7 @@
 import { useCallback, useContext } from "react";
 
 import { get } from "idb-keyval";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { LogAllow } from "@src/rnbwTSX";
 import { isUnsavedProject } from "@_api/file/helpers";
@@ -10,15 +10,17 @@ import { TProject } from "@_redux/main/fileTree";
 import {
   setActivePanel,
   setNavigatorDropdownType,
-  setShowFilePanel,
 } from "@_redux/main/processor";
 import { useAppState } from "@_redux/useAppState";
+import { setShowFileTree } from "@src/_redux/global";
+import { AppState } from "@src/_redux/store";
 
 export const useNavigatorPanelHandlers = () => {
   const dispatch = useDispatch();
-  const { fileTree, navigatorDropdownType, showFilePanel, activePanel } =
-    useAppState();
-
+  const { fileTree, navigatorDropdownType, activePanel } = useAppState();
+  const { showFileTree } = useSelector(
+    (state: AppState) => state.global.panelsState,
+  );
   const {
     // open project
     importProject,
@@ -62,8 +64,8 @@ export const useNavigatorPanelHandlers = () => {
 
   const onPanelClick = useCallback(() => {
     if (activePanel !== "file") dispatch(setActivePanel("file"));
-    dispatch(setShowFilePanel(!showFilePanel));
-  }, [showFilePanel, activePanel]);
+    dispatch(setShowFileTree(!showFileTree));
+  }, [showFileTree, activePanel]);
 
   return {
     onProjectClick,

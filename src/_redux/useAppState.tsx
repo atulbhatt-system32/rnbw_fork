@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 
-import { AppState } from "./_root";
+import { AppState } from "./store";
 
 export const useAppState = () => {
   const {
@@ -63,9 +63,6 @@ export const useAppState = () => {
         favicon,
         activePanel,
         clipboardData,
-        showActionsPanel,
-        showCodeView,
-        showFilePanel,
         autoSave,
         wordWrap,
         didUndo,
@@ -163,10 +160,6 @@ export const useAppState = () => {
 
     activePanel,
     clipboardData,
-
-    showActionsPanel,
-    showCodeView,
-    showFilePanel,
 
     autoSave,
     wordWrap,

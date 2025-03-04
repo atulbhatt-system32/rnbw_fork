@@ -7,10 +7,14 @@ import WorkspaceTreeView from "./workspaceTreeView";
 
 import { useAppState } from "@_redux/useAppState";
 import { getFileExtension } from "./navigatorPanel/helpers";
+import { AppState } from "@src/_redux/store";
+import { useSelector } from "react-redux";
 
 export default function ActionsPanel() {
-  const { showFilePanel, selectedNodeUids, currentFileUid, fileTree } =
-    useAppState();
+  const { selectedNodeUids, currentFileUid, fileTree } = useAppState();
+  const { showFileTree } = useSelector(
+    (state: AppState) => state.global.panelsState,
+  );
 
   const isCurrentFileHtml = useMemo(() => {
     const fileNode = fileTree[currentFileUid];
@@ -39,7 +43,7 @@ export default function ActionsPanel() {
           style={{
             display: "flex",
             flexDirection: "column",
-            height: showFilePanel
+            height: showFileTree
               ? isSettingsPanelVisible
                 ? "20%"
                 : "95%"
@@ -53,5 +57,5 @@ export default function ActionsPanel() {
         {isSettingsPanelVisible && <SettingsPanel />}
       </div>
     );
-  }, [showFilePanel, selectedNodeUids, isCurrentFileHtml]);
+  }, [showFileTree, selectedNodeUids, isCurrentFileHtml]);
 }

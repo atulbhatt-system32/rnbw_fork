@@ -14,7 +14,6 @@ import {
 } from "@_api/index";
 
 import { setSelectedNodeUids } from "@_redux/main/nodeTree";
-import { setShowCodeView } from "@_redux/main/processor";
 import { useAppState } from "@_redux/useAppState";
 import { Editor } from "@monaco-editor/react";
 
@@ -22,7 +21,8 @@ import { useEditor } from "./hooks";
 import { getNodeUidByCodeSelection } from "./helpers";
 import { setEditingNodeUidInCodeView } from "@_redux/main/codeView";
 import { getFileExtension } from "../sidebarView/navigatorPanel/helpers";
-import { AppState } from "@src/_redux/_root";
+import { AppState } from "@src/_redux/store";
+import { setShowCodePanel } from "@src/_redux/global";
 
 loader.config({ monaco });
 export default function RnbwEditor() {
@@ -38,7 +38,6 @@ export default function RnbwEditor() {
     nFocusedItem,
 
     activePanel,
-    showCodeView,
     wordWrap,
     editingNodeUidInCodeView,
     isCodeTyping,
@@ -47,6 +46,10 @@ export default function RnbwEditor() {
 
   const editorInstance = useSelector(
     (state: AppState) => state.main.editor.editorInstance,
+  );
+
+  const { showCodePanel } = useSelector(
+    (state: AppState) => state.global.panelsState,
   );
 
   const {
@@ -223,10 +226,10 @@ export default function RnbwEditor() {
   // show codeView when opening a file without design
   useEffect(() => {
     const fileNode = fileTree[currentFileUid];
-    if (!fileNode || showCodeView) return;
+    if (!fileNode || showCodePanel) return;
 
     const isCurrentFileHtml = getFileExtension(fileNode) === "html";
-    !isCurrentFileHtml && dispatch(setShowCodeView(true));
+    !isCurrentFileHtml && dispatch(setShowCodePanel(true));
   }, [currentFileUid]);
 
   // Sync value (note: this has to come before decorations)

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-
-import { useAppState } from "@_redux/useAppState";
 import { ResizablePanelsProps } from "../rnbw";
+import { AppState } from "@src/_redux/store";
+import { useSelector } from "react-redux";
 
 const CODE_VIEW_WIDTH = "320px";
 const ACTIONS_PANEL_WIDTH = "240px";
@@ -11,39 +11,39 @@ export default function ResizablePanels({
   designView,
   codeView,
 }: ResizablePanelsProps) {
-  const { showActionsPanel, showCodeView } = useAppState();
+  const { showCodePanel, showTreePanel } = useSelector(
+    (state: AppState) => state.global.panelsState,
+  );
 
   const [isActionPanelHovered, setIsActionPanelHovered] = useState(false);
   const [isCodeViewHovered, setIsCodeViewHovered] = useState(false);
 
   const wrapperStyle: React.CSSProperties = {
-    width:
-      showActionsPanel || isActionPanelHovered ? ACTIONS_PANEL_WIDTH : "2px",
+    width: showTreePanel || isActionPanelHovered ? ACTIONS_PANEL_WIDTH : "2px",
     height: "100%",
-    position: showActionsPanel ? "relative" : "absolute",
+    position: showTreePanel ? "relative" : "absolute",
     zIndex: 10,
   };
 
   const actionsPanelStyle: React.CSSProperties = {
-    width:
-      showActionsPanel || isActionPanelHovered ? ACTIONS_PANEL_WIDTH : "0px",
+    width: showTreePanel || isActionPanelHovered ? ACTIONS_PANEL_WIDTH : "0px",
     height: "100vh",
     transform:
-      showActionsPanel || isActionPanelHovered
+      showTreePanel || isActionPanelHovered
         ? "translateX(0px)"
         : "translateX(-300px)",
   };
 
   const codeViewWrapperStyle: React.CSSProperties = {
-    width: showCodeView || isCodeViewHovered ? CODE_VIEW_WIDTH : "32px",
+    width: showCodePanel || isCodeViewHovered ? CODE_VIEW_WIDTH : "32px",
     height: "100vh",
-    position: showCodeView ? "relative" : "absolute",
+    position: showCodePanel ? "relative" : "absolute",
     zIndex: 10,
     right: "0px",
   };
 
   const codeViewStyle: React.CSSProperties = {
-    width: showCodeView || isCodeViewHovered ? CODE_VIEW_WIDTH : "0px",
+    width: showCodePanel || isCodeViewHovered ? CODE_VIEW_WIDTH : "0px",
     height: "100%",
     right: "0px",
     zIndex: 10,

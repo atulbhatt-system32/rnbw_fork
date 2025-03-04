@@ -8,11 +8,12 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { MainContext } from "@_redux/main";
 import { setActivePanel } from "@_redux/main/processor";
 import { useAppState } from "@_redux/useAppState";
 import IFrame from "./iFrame";
+import { AppState } from "@src/_redux/store";
 
 enum Direction {
   TopLeft = "top-left",
@@ -556,7 +557,10 @@ const Resize: FC<ResizeProps> = ({ children, scale, canvas }) => {
 };
 
 export default function StageView() {
-  const { showCodeView, activePanel } = useAppState();
+  const { activePanel } = useAppState();
+  const { showCodePanel } = useSelector(
+    (state: AppState) => state.global.panelsState,
+  );
 
   const dispatch = useDispatch();
   const onClick = useCallback(() => {
@@ -568,7 +572,7 @@ export default function StageView() {
       <PanAndPinch>
         <div
           id="StageView"
-          className={showCodeView ? "" : "view"}
+          className={showCodePanel ? "" : "view"}
           onClick={onClick}
           style={{
             height: "100%",
@@ -578,5 +582,5 @@ export default function StageView() {
         </div>
       </PanAndPinch>
     );
-  }, [showCodeView, activePanel, onClick]);
+  }, [showCodePanel, activePanel, onClick]);
 }

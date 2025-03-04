@@ -7,10 +7,6 @@ export type TProcessorReducerState = {
   activePanel: TPanelContext;
   clipboardData: TClipboardData | null;
 
-  showActionsPanel: boolean;
-  showCodeView: boolean;
-  showFilePanel: boolean;
-
   autoSave: boolean;
   wordWrap: boolean;
 

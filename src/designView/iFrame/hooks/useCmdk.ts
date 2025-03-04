@@ -9,7 +9,7 @@ import { getCommandKey } from "../../../rnbw";
 import { TCmdkKeyMap } from "@src/types";
 
 import { getBodyChild, getValidElementWithUid } from "../helpers";
-import { setShowActionsPanel, setShowCodeView } from "@_redux/main/processor";
+
 import { eventListenersStatesRefType } from "../IFrame";
 import { setHoveredNodeUid } from "@_redux/main/nodeTree";
 import useRnbw from "@_services/useRnbw";
@@ -24,8 +24,8 @@ export const useCmdk = () => {
       event: KeyboardEvent,
       eventListenerRef: React.MutableRefObject<eventListenersStatesRefType>,
     ) => {
-      const { isEditingRef, showActionsPanel, showCodeView, activePanel } =
-        eventListenerRef.current;
+      const { isEditingRef, activePanel } = eventListenerRef.current;
+
       if (isEditingRef.current) return;
       if (event.code === "Escape") {
         if (activePanel === "file") {
@@ -35,13 +35,13 @@ export const useCmdk = () => {
           )
             return;
         }
-        if (!showActionsPanel && !showCodeView) {
-          dispatch(setShowActionsPanel(true));
-          dispatch(setShowCodeView(true));
-        } else {
-          dispatch(setShowActionsPanel(false));
-          dispatch(setShowCodeView(false));
-        }
+        // if (!showActionsPanel && !showCodeView) {
+        //   dispatch(setShowActionsPanel(true));
+        //   dispatch(setShowCodeView(true));
+        // } else {
+        //   dispatch(setShowActionsPanel(false));
+        //   dispatch(setShowCodeView(false));
+        // }
       }
     },
     [],

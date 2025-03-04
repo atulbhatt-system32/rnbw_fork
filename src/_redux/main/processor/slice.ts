@@ -14,10 +14,6 @@ const processorReducerInitialState: TProcessorReducerState = {
   activePanel: "none",
   clipboardData: null,
 
-  showActionsPanel: true,
-  showCodeView: true,
-  showFilePanel: false,
-
   autoSave: true,
   wordWrap: false,
 
@@ -51,18 +47,6 @@ const processorSlice = createSlice({
       state.clipboardData = clipboardData;
     },
 
-    setShowActionsPanel(state, action: PayloadAction<boolean>) {
-      const showActionsPanel = action.payload;
-      state.showActionsPanel = showActionsPanel;
-    },
-    setShowCodeView(state, action: PayloadAction<boolean>) {
-      const showCodeView = action.payload;
-      state.showCodeView = showCodeView;
-    },
-    setShowFilePanel(state, action: PayloadAction<boolean>) {
-      const showFilePanel = action.payload;
-      state.showFilePanel = showFilePanel;
-    },
     setAutoSave(state, action: PayloadAction<boolean>) {
       const autoSave = action.payload;
       state.autoSave = autoSave;
@@ -100,10 +84,6 @@ export const {
 
   setActivePanel,
   setClipboardData,
-
-  setShowActionsPanel,
-  setShowCodeView,
-  setShowFilePanel,
 
   setAutoSave,
   setWordWrap,
