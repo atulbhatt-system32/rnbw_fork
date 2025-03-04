@@ -16,10 +16,8 @@ import {
   THtmlParserResponse,
 } from "@_api/node";
 import {
-  DataSequencedUid,
   getDecorationUid,
   getUidDecorations,
-  StageNodeIdAttr,
   TNode,
   TNodePositionInfo,
   TNodeUid,
@@ -36,6 +34,7 @@ import {
 } from "@_redux/main/nodeTree";
 import { TCmdkGroupData } from "@_types/main.types";
 import { notify } from "./notificationService";
+import { DataSequencedUid, StageNodeIdAttr } from "@src/constants";
 
 export async function PrettyCode({
   code,

@@ -3,7 +3,6 @@ import { useDispatch } from "react-redux";
 
 import { LogAllow } from "@src/rnbwTSX";
 import { ShortDelay } from "@src/rnbwTSX";
-import { StageNodeIdAttr } from "@_api/file";
 import { getValidNodeUids } from "@_api/helpers";
 import { THtmlNodeData } from "@_api/node";
 import { MainContext } from "@_redux/main";
@@ -31,7 +30,7 @@ import { eventListenersStatesRefType } from "../IFrame";
 import { TNodeUid } from "@_api/index";
 import { useNavigate } from "react-router-dom";
 import useRnbw from "@_services/useRnbw";
-
+import { StageNodeIdAttr } from "@src/constants";
 export const useMouseEvents = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();

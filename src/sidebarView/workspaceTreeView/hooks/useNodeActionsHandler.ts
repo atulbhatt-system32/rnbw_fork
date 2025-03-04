@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo } from "react";
 
 import { TreeItem } from "react-complex-tree";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { LogAllow } from "@src/rnbwTSX";
 import {
@@ -45,6 +45,7 @@ import {
   setClipboardData,
 } from "@_redux/main/processor";
 import { useAppState } from "@_redux/useAppState";
+import { AppState } from "@src/_redux/store";
 
 export const useNodeActionsHandler = () => {
   const dispatch = useDispatch();
@@ -52,7 +53,6 @@ export const useNodeActionsHandler = () => {
     project,
     currentFileUid,
     fileTree,
-    showCodeView,
     fFocusedItem: focusedItem,
     fExpandedItemsObj: expandedItemsObj,
     fSelectedItemsObj,
@@ -60,6 +60,9 @@ export const useNodeActionsHandler = () => {
     fileHandlers,
     invalidFileNodes,
   } = useAppState();
+  const { showCodePanel } = useSelector(
+    (state: AppState) => state.global.panelsState,
+  );
   const { reloadCurrentProject } = useContext(MainContext);
   const selectedItems = useMemo(
     () => getObjKeys(fSelectedItemsObj),
@@ -455,7 +458,7 @@ export const useNodeActionsHandler = () => {
       dispatch(setCurrentFileContent(nodeData.content));
       dispatch(removeRunningAction());
     },
-    [invalidFileNodes, fileTree, currentFileUid, showCodeView],
+    [invalidFileNodes, fileTree, currentFileUid, showCodePanel],
   );
   const cb_moveNode = useCallback(
     async (uids: string[], targetUid: TNodeUid) => {

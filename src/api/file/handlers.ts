@@ -10,11 +10,11 @@ import {
   THtmlParserResponse,
 } from "../node/type/html";
 import { notify } from "@src/services/notificationService";
-
-export const StageNodeIdAttr = "data-rnbw-stage-node-id";
-export const PreserveRnbwNode = "data-rnbw-preserve-node";
-export const DataSequencedUid = "data-sequenced-uid";
-export const ValidStageNodeUid = "data-rnbw-stage-valid-uid";
+import {
+  DataSequencedUid,
+  StageNodeIdAttr,
+  ValidStageNodeUid,
+} from "@src/constants";
 
 export const PARSING_ERROR_MESSAGES: Record<string, string> = {
   "unexpected-solidus-in-tag": "Unexpected symbol in tag",

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import { StageNodeIdAttr, DataSequencedUid } from "@_api/file";
+import { StageNodeIdAttr, DataSequencedUid } from "@src/constants";
 import { useAppState } from "@_redux/useAppState";
 import { setActivePanel } from "@_redux/main/processor";
 import { SVGIcon } from "@src/components";

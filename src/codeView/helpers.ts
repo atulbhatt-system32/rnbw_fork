@@ -1,4 +1,4 @@
-import { TTheme } from "@_redux/global";
+import { TTheme } from "@src/types";
 import { getSystemTheme } from "../rnbw";
 import { TCodeSelection } from "./types";
 import { TNodeTreeData, TNodeUid } from "@_api/types";

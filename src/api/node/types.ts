@@ -2,7 +2,7 @@ import { Dispatch } from "react";
 
 import { editor } from "monaco-editor";
 
-import { TOsType } from "@_redux/global";
+import { TOsType } from "@src/types";
 import { AnyAction } from "@reduxjs/toolkit";
 
 import {

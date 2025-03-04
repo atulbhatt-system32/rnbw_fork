@@ -1,4 +1,4 @@
-import { TOsType } from "@_redux/global";
+import { TOsType } from "@src/types";
 
 export const SystemDirectories: {
   [osType in TOsType]: { [name: string]: true };

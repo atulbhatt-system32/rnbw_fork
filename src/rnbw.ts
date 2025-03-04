@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { TOsType, TTheme } from "@_redux/global";
+import { TOsType, TTheme } from "@src/types";
 
 import MainPage from "./rnbwTSX";
 import ActionsPanel from "./sidebarView";

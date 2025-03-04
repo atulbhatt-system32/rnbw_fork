@@ -8,7 +8,7 @@ import {
   RootNodeUid,
   StagePreviewPathPrefix,
 } from "@src/rnbwTSX";
-import { TOsType } from "@_redux/global";
+import { TOsType } from "@src/types";
 import { SystemDirectories } from "../../commandMenu/SystemDirectories";
 import { verifyFileHandlerPermission } from "../../rnbw";
 
