@@ -44,6 +44,7 @@ import {
 import { NodeIcon } from "./workspaceComponents/NodeIcon";
 import { TFilesReference } from "@rnbws/rfrncs.design";
 import useRnbw from "@_services/useRnbw";
+import projectService from "@src/services/project.service";
 
 const AutoExpandDelayOnDnD = 1 * 1000;
 export default function WorkspaceTreeView() {
@@ -495,6 +496,11 @@ export default function WorkspaceTreeView() {
 
           onPrimaryAction: (item) => {
             item.data.data.valid && openFile(item.index as TNodeUid);
+            if (item.data.data.valid) {
+              const uid = item.index as TNodeUid;
+              const file = fileTree[uid];
+              projectService.openFile(file);
+            }
           },
 
           onDrop: (items, target) => {

@@ -23,7 +23,7 @@ import { PanelHeader } from "@src/sidebarView/panelHeader";
 import IconButton from "@src/components/IconButton/IconButton";
 import { useDispatch, useSelector } from "react-redux";
 import { setCmdkPages } from "@src/_redux/main/cmdk";
-import projectService from "@src/services/projectService";
+import projectService from "@src/services/project.service";
 import { AppState } from "@src/_redux/store";
 
 export default function NavigatorPanel() {

@@ -24,7 +24,7 @@ import { TCmdkKeyMap, TCmdkReferenceData } from "@src/types";
 import { setSystemTheme } from "../helper";
 import useRnbw from "@_services/useRnbw";
 
-import projectService from "@src/services/projectService";
+import projectService from "@src/services/project.service";
 import { AppState } from "@src/_redux/store";
 import globalService from "@src/services/global.service";
 
