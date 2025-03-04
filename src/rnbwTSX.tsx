@@ -9,7 +9,7 @@ import { Workbox } from "workbox-window";
 import persistStore from "redux-persist/es/persistStore";
 import { PersistGate } from "redux-persist/integration/react";
 
-import configureStore, { AppState } from "@_redux/_root";
+import { AppState, store } from "@src/_redux/store";
 import { Loader } from "@src/components";
 import { ActionsPanel, CodeView, DesignView } from "./rnbw";
 import { isUnsavedProject } from "@_api/file";
@@ -281,7 +281,6 @@ function App() {
 }
 
 // configure store
-const store = configureStore({});
 const persistor = persistStore(store);
 
 // render #root
