@@ -5,11 +5,6 @@ import { combineReducers } from "@reduxjs/toolkit";
 const global = { global: GlobalReducer };
 const main = { main: MainReducer };
 
-const rootReducer = combineReducers({
-  ...global,
-  ...main,
-});
-
 export default function createReducer(injectedReducers = {}) {
   const rootReducer = combineReducers({
     ...global,
@@ -18,5 +13,3 @@ export default function createReducer(injectedReducers = {}) {
   });
   return rootReducer;
 }
-
-export type AppState = ReturnType<typeof rootReducer>;

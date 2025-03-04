@@ -7,7 +7,7 @@ import {
   NotificationEvent,
 } from "@src/types/notification.types";
 import { useSelector, useDispatch } from "react-redux";
-import { AppState } from "@src/_redux/_root";
+import { AppState } from "@src/_redux/store";
 import {
   addParserError,
   removeParserError,

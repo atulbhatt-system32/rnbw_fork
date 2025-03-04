@@ -19,7 +19,7 @@ import { setIsCodeTyping } from "@_redux/main/reference";
 import { debounce } from "@src/helper";
 import { setFileTreeNodes } from "@_redux/main/fileTree";
 import { setEditorInstance } from "@src/_redux/main/editorSlice";
-import { AppState } from "@src/_redux/_root";
+import { AppState } from "@src/_redux/store";
 
 const useEditor = () => {
   const dispatch = useDispatch();
