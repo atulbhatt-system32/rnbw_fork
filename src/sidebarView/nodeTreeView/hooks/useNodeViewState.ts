@@ -18,8 +18,6 @@ export function useNodeViewState() {
   const {
     fileTree,
     currentFileUid,
-    renderableFileUid,
-
     validNodeTree,
     nSelectedItemsObj: selectedItemsObj,
   } = useAppState();
@@ -50,13 +48,7 @@ export function useNodeViewState() {
       dispatch(setSelectedNodeUids(_uids));
       dispatch(removeRunningAction());
     },
-    [
-      fileTree,
-      currentFileUid,
-      renderableFileUid,
-      validNodeTree,
-      selectedItemsObj,
-    ],
+    [fileTree, currentFileUid, validNodeTree, selectedItemsObj],
   );
 
   const cb_expandNode = useCallback((uid: TNodeUid) => {

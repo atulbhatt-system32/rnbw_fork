@@ -23,7 +23,6 @@ import {
   setFileTree,
   setInitialFileUidToOpen,
   setProject,
-  setRenderableFileUid,
   TProjectContext,
   updateFileTreeViewState,
 } from "@_redux/main/fileTree";
@@ -213,7 +212,6 @@ export const useHandlers = () => {
 
         if (deletedUidsObj[currentFileUid] || !currentFileUid) {
           await dispatch(setCurrentFileUid(_initialFileUidToOpen));
-          await dispatch(setRenderableFileUid(_initialFileUidToOpen));
           await dispatch(
             setCurrentFileContent(
               _fileTree[_initialFileUidToOpen].data.content ||
@@ -230,11 +228,9 @@ export const useHandlers = () => {
           navigate(pathURL);
         } else if (_initialFileUidToOpen == "") {
           await dispatch(setCurrentFileUid(""));
-          await dispatch(setRenderableFileUid(""));
           await dispatch(setCurrentFileContent(""));
         } else if (currentFileUid) {
           await dispatch(setCurrentFileUid(currentFileUid));
-          await dispatch(setRenderableFileUid(currentFileUid));
           await dispatch(
             setCurrentFileContent(
               _fileTree[currentFileUid].data.content
@@ -267,7 +263,7 @@ export const useHandlers = () => {
           if (deletedUidsObj[currentFileUid]) {
             if (_initialFileUidToOpen !== "") {
               await dispatch(setCurrentFileUid(_initialFileUidToOpen));
-              await dispatch(setRenderableFileUid(_initialFileUidToOpen));
+
               await dispatch(
                 setCurrentFileContent(
                   _fileTree[_initialFileUidToOpen].data.content,
@@ -275,7 +271,6 @@ export const useHandlers = () => {
               );
             } else {
               await dispatch(setCurrentFileUid(""));
-              await dispatch(setRenderableFileUid(""));
               await dispatch(setCurrentFileContent(""));
             }
           }

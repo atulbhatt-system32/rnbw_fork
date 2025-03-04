@@ -32,7 +32,6 @@ import {
   setDoingFileAction,
   setFileAction,
   setFileTree,
-  setRenderableFileUid,
   TFileAction,
 } from "@_redux/main/fileTree";
 import {
@@ -443,7 +442,6 @@ export const useNodeActionsHandler = () => {
 
       const nodeData = node.data as TFileNodeData;
       if (RenderableFileTypes[nodeData.ext]) {
-        dispatch(setRenderableFileUid(uid));
         // set initial content of the html if file content is empty
         if (
           nodeData.ext === "html" &&

@@ -59,7 +59,6 @@ export default function WorkspaceTreeView() {
     linkToOpen,
     autoSave,
     activePanel,
-    renderableFileUid,
     filesReferenceData,
     currentProjectFileHandle,
     recentProject,
@@ -127,7 +126,8 @@ export default function WorkspaceTreeView() {
   useEffect(
     function RevertWcOpen() {
       if (activePanel === "stage") {
-        openFile(renderableFileUid);
+        // openFile(renderableFileUid);
+        //TODO: open the last opened file
       }
     },
     [activePanel],
