@@ -2,12 +2,9 @@ import { RootNodeUid } from "@src/rnbwTSX";
 import { parse } from "parse5";
 import { Document } from "parse5/dist/tree-adapters/default";
 import { notify } from "./notificationService";
-import { TreeNodeData, TreeStructure } from "@src/types/html.types";
-import { StageNodeIdAttr } from "@src/api";
+import { TreeNodeData, TreeStructure, HtmlNode } from "@src/types/html.types";
+import { RnbwEditableNodeAttr, StageNodeIdAttr } from "@src/constants";
 
-interface HtmlNode extends Element {
-  attrs: { name: string; value: string }[];
-}
 function parseHtml(html: string) {
   const document = parse(html, {
     sourceCodeLocationInfo: true,
@@ -178,16 +175,6 @@ function createPreviewContent() {
   return previewContent;
 }
 
-function clearSelectedElements() {
-  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
-  const selectedElements = iframe?.contentWindow?.document.querySelectorAll(
-    `[rnbwdev-rnbw-element-select]`,
-  );
-  selectedElements?.forEach((ele) => {
-    ele.removeAttribute("rnbwdev-rnbw-element-select");
-  });
-}
-
 function scrollToElement(uid: string) {
   const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
   const element = iframe?.contentWindow?.document?.querySelector(
@@ -202,11 +189,18 @@ function scrollToElement(uid: string) {
   }
 }
 
-function isElementWebComponent(element: Element): boolean {
+function checkIsNodeWebComponent(nodeId: string): boolean {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const element = iframe?.contentWindow?.document?.querySelector(
+    `[${StageNodeIdAttr}="${nodeId}"]`,
+  );
   // Check if element name contains a hyphen (standard convention for custom elements)
-  const hasHyphen = element.tagName.includes("-");
+  const hasHyphen = nodeId.includes("-");
 
   // Check if element has a shadow root (another key characteristic of many web components)
+  if (!element) {
+    return false;
+  }
   const hasShadowRoot = !!element.shadowRoot;
 
   // Check if element is registered as a custom element
@@ -214,6 +208,26 @@ function isElementWebComponent(element: Element): boolean {
     customElements.get(element.tagName.toLowerCase()) !== undefined;
 
   return hasHyphen || hasShadowRoot || isCustomElement;
+}
+
+function clearSelectedElements() {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const selectedElements = iframe?.contentWindow?.document.querySelectorAll(
+    `[rnbwdev-rnbw-element-select]`,
+  );
+  selectedElements?.forEach((ele) => {
+    ele.removeAttribute("rnbwdev-rnbw-element-select");
+  });
+}
+
+function clearHoveredElements() {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const hoveredElements = iframe?.contentWindow?.document.querySelectorAll(
+    `[rnbwdev-rnbw-element-hover]`,
+  );
+  hoveredElements?.forEach((ele) => {
+    ele.removeAttribute("rnbwdev-rnbw-element-hover");
+  });
 }
 
 function markSelectedElements(uids: string[]) {
@@ -228,12 +242,84 @@ function markSelectedElements(uids: string[]) {
     );
 
     //check if the element is a web component
-    const isWebComponent = isElementWebComponent(selectedElement as Element);
+    const isWebComponent = checkIsNodeWebComponent(uid);
     if (isWebComponent) {
       selectedElement = selectedElement?.firstElementChild;
     }
     selectedElement?.setAttribute("rnbwdev-rnbw-element-select", "");
   });
+}
+
+function markHoveredElement(uid: string) {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  clearHoveredElements();
+  // if it's a web component, should select its first child element
+  const hoveredElement = iframe?.contentWindow?.document?.querySelector(
+    `[${StageNodeIdAttr}="${uid}"]`,
+  );
+
+  hoveredElement?.setAttribute("rnbwdev-rnbw-element-hover", "");
+}
+
+function makeNodeEditable(uid: string, clickX?: number, clickY?: number) {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const element = iframe?.contentWindow?.document?.querySelector(
+    `[${StageNodeIdAttr}="${uid}"]`,
+  );
+
+  if (element) {
+    element.setAttribute("contenteditable", "true");
+    element.setAttribute("rnbwdev-rnbw-editable", "");
+
+    // Cast to HTMLElement to access focus method
+    (element as HTMLElement).focus();
+
+    // If click coordinates are provided, position the cursor at that point
+    if (clickX !== undefined && clickY !== undefined && iframe?.contentWindow) {
+      const document = iframe.contentWindow.document;
+
+      // Create a range from the point where user clicked
+      const range = document.caretRangeFromPoint(clickX, clickY);
+
+      if (range) {
+        // Create a selection and set the range
+        const selection = document.getSelection();
+        if (selection) {
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+    }
+  }
+}
+
+function makeNodeNonEditable(uid: string) {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const element = iframe?.contentWindow?.document?.querySelector(
+    `[${StageNodeIdAttr}="${uid}"]`,
+  );
+  if (element) {
+    element.removeAttribute("contenteditable");
+    element.removeAttribute("rnbwdev-rnbw-editable");
+  }
+}
+
+function findAndGetAllEditableNodes() {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const elements = iframe?.contentWindow?.document.querySelectorAll(
+    `[${RnbwEditableNodeAttr}]`,
+  );
+  return elements;
+}
+
+function makeAllEditableNodesNonEditable() {
+  const elements = findAndGetAllEditableNodes();
+  if (elements) {
+    elements.forEach((element) => {
+      element.removeAttribute("contenteditable");
+      element.removeAttribute("rnbwdev-rnbw-editable");
+    });
+  }
 }
 
 export default {
@@ -242,5 +328,11 @@ export default {
   createPreviewContent,
   getInitialExpandedNodesFromNodeTree,
   markSelectedElements,
+  markHoveredElement,
   scrollToElement,
+  makeNodeEditable,
+  makeNodeNonEditable,
+  checkIsNodeWebComponent,
+  makeAllEditableNodesNonEditable,
+  findAndGetAllEditableNodes,
 };
