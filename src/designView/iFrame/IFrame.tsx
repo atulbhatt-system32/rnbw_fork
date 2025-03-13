@@ -9,7 +9,7 @@ import React, {
 
 import { useDispatch, useSelector } from "react-redux";
 
-import { LogAllow } from "@src/rnbwTSX";
+import { LogAllow } from "@src/constants";
 import { TNodeTreeData, TNodeUid } from "@_api/types";
 import { MainContext } from "@_redux/main";
 import { setIframeLoading } from "@_redux/main/designView";
@@ -21,8 +21,10 @@ import { useCmdk, useMouseEvents, useSyncNode } from "./hooks";
 
 import { debounce } from "lodash";
 import eventEmitter from "@src/services/eventEmitter";
-import { AppState } from "@src/_redux/_root";
+import { AppState } from "@src/_redux/store";
 import { ProjectEvent } from "@src/types";
+import { useDesignView } from "../useDesignView";
+import { StageNodeIdAttr } from "@src/constants";
 
 type AppStateReturnType = ReturnType<typeof useAppState>;
 export interface eventListenersStatesRefType extends AppStateReturnType {
@@ -40,13 +42,14 @@ export const IFrame = () => {
   const [iframeRefState, setIframeRefState] =
     useState<HTMLIFrameElement | null>(null);
   const [document, setDocument] = useState<Document | string | undefined>("");
+  useDesignView();
 
   const isEditingRef = useRef(false);
   const dispatch = useDispatch();
   const appState: AppStateReturnType = useAppState();
-  const { nodeTree, project, validNodeTree, renderableFileUid } = appState;
+  const { nodeTree, project, validNodeTree } = appState;
   const currentPagePreviewUrl = useSelector(
-    (state: AppState) => state.main.currentPage.previewUrl,
+    (state: AppState) => state.main.currentPage.designViewState.previewUrl,
   );
   const { iframeRefRef, setIframeRefRef, contentEditableUidRef } =
     useContext(MainContext);
@@ -67,14 +70,8 @@ export const IFrame = () => {
   });
 
   const { onKeyDown, onKeyUp, handlePanelsToggle } = useCmdk();
-  const {
-    onMouseEnter,
-    onMouseMove,
-    onMouseLeave,
-    onClick,
-    onDblClick,
-    onMouseOver,
-  } = useMouseEvents();
+  const { onMouseEnter, onMouseMove, onMouseLeave, onClick, onDblClick } =
+    useMouseEvents();
 
   useEffect(() => {
     const reloadIframeSrc = () => {
@@ -124,10 +121,7 @@ export const IFrame = () => {
         handlePanelsToggle(e, eventListenersStatesRef);
         onKeyDown(e, eventListenersStatesRef);
         // to ensure that the events between the iframe and the document are executed sequentially and smoothly, we use the postMessage function
-        window.parent.postMessage(
-          { type: "keydown", key: e.key, code: e.code },
-          "*",
-        );
+        window.parent.postMessage({ type: "keydown", key: e.key }, "*");
       });
 
       htmlNode.addEventListener("mouseenter", () => {
@@ -145,15 +139,69 @@ export const IFrame = () => {
       });
 
       htmlNode.addEventListener("mouseover", (e: MouseEvent) => {
-        onMouseOver(e, eventListenersStatesRef);
+        // onMouseOver(e, eventListenersStatesRef);
+
+        // Get the target element
+        const target = e.target as HTMLElement;
+        const nodeId = target.getAttribute(StageNodeIdAttr);
+
+        // Check if Ctrl key (Windows) or Cmd key (Mac) is pressed
+        const isModifierKeyPressed = e.ctrlKey || e.metaKey;
+
+        // Send the hover event to parent window with modifier key information
+        if (nodeId) {
+          window.parent.postMessage(
+            {
+              type: isModifierKeyPressed ? "propagatedNodeHover" : "nodeHover",
+              nodeId,
+            },
+            "*",
+          );
+        }
       });
       htmlNode.addEventListener("click", (e: MouseEvent) => {
         e.preventDefault();
         onClick(e, eventListenersStatesRef);
+        // Get the target element
+        const target = e.target as HTMLElement;
+        const nodeId = target.getAttribute(StageNodeIdAttr);
+
+        // Send the click event to parent window
+        if (nodeId) {
+          // For single selection
+          window.parent.postMessage({ type: "nodeSelect", nodeId }, "*");
+        }
       });
       htmlNode.addEventListener("dblclick", (e: MouseEvent) => {
         e.preventDefault();
         onDblClick(e, eventListenersStatesRef);
+
+        const target = e.target as HTMLElement;
+        const nodeId = target.getAttribute(StageNodeIdAttr);
+
+        if (nodeId) {
+          // Pass the click coordinates along with the node ID
+          window.parent.postMessage(
+            {
+              type: "nodeDblClick",
+              nodeId,
+              clickX: e.clientX,
+              clickY: e.clientY,
+            },
+            "*",
+          );
+        }
+      });
+
+      //blur event
+      htmlNode.addEventListener("focusout", (e) => {
+        e.preventDefault();
+        const target = e.target as HTMLElement;
+        const nodeId = target.getAttribute(StageNodeIdAttr);
+
+        if (nodeId) {
+          window.parent.postMessage({ type: "nodeBlur", nodeId }, "*");
+        }
       });
       htmlNode.addEventListener("keyup", (e: KeyboardEvent) => {
         e.preventDefault();
@@ -349,7 +397,6 @@ export const IFrame = () => {
       <>
         {currentPagePreviewUrl && (
           <iframe
-            key={renderableFileUid}
             ref={setIframeRefState}
             id={"iframeId"}
             src={currentPagePreviewUrl}
