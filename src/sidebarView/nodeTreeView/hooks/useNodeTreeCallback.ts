@@ -7,26 +7,32 @@ import { useAppState } from "@_redux/useAppState";
 import { useNodeViewState } from "./useNodeViewState";
 import useRnbw from "@_services/useRnbw";
 
+import { useDispatch } from "react-redux";
+import {
+  addExpandedNodeUidThunk,
+  removeExpandedNodeUidThunk,
+  setSelectedNodeUidsThunk,
+} from "@src/_redux/main/currentPage/currentPage.thunk";
 export const useNodeTreeCallback = (
   isDragging: React.MutableRefObject<boolean>,
 ) => {
   const { validNodeTree, htmlReferenceData } = useAppState();
   const rnbw = useRnbw();
+  const dispatch = useDispatch();
 
-  const { cb_focusNode, cb_selectNode, cb_expandNode, cb_collapseNode } =
-    useNodeViewState();
+  const { cb_focusNode } = useNodeViewState();
 
   const onSelectItems = (items: TreeItemIndex[]) => {
-    cb_selectNode(items as TNodeUid[]);
+    dispatch(setSelectedNodeUidsThunk(items as TNodeUid[]));
   };
   const onFocusItem = () => {
     cb_focusNode();
   };
   const onExpandItem = (item: TreeItem) => {
-    cb_expandNode(item.index as TNodeUid);
+    dispatch(addExpandedNodeUidThunk(item.index as TNodeUid));
   };
   const onCollapseItem = (item: TreeItem) => {
-    cb_collapseNode(item.index as TNodeUid);
+    dispatch(removeExpandedNodeUidThunk(item.index as TNodeUid));
   };
 
   const onDrop = (
