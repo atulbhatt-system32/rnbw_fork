@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 
 import { getNodeUidByCodeSelection } from "@src/codeView";
 import { markSelectedElements } from "@src/designView/iFrame/helpers";
-import { LogAllow } from "@src/rnbwTSX";
+import { LogAllow } from "@src/constants";
 import { _writeIDBFile } from "@_api/file";
 
 import { TNodeUid } from "@_api/types";
@@ -50,10 +50,12 @@ import { getObjKeys } from "@src/helper";
 import { getFileExtension } from "@src/sidebarView/navigatorPanel/helpers";
 import { useElementHelper } from "@_services/useElementsHelper";
 import { notify } from "@src/services/notificationService";
-// @ts-expect-error no types
-import Idiomorph from "idiomorph";
-import { setCurrentPage } from "@src/_redux/main/currentPage.slice";
 
+// import Idiomorph from "idiomorph";
+import { setCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
+import htmlService from "@src/services/html.service";
+import { setCurrentPageNewNodeTreeThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
+import { serialize } from "parse5";
 export const useNodeTreeEvent = () => {
   const dispatch = useDispatch();
   const {
@@ -121,26 +123,39 @@ export const useNodeTreeEvent = () => {
         dispatch(removeRunningAction());
         return;
       }
-      const {
-        contentInApp,
-        nodeTree,
-        selectedNodeUids: selectedNodeUidsAfterActions,
-      } = ext === "html"
-        ? await parseHtml(
-            currentFileContent,
-            maxNodeUidRef.current,
-            nodeUidPositions,
-            setMaxNodeUidRef,
-          )
-        : {
-            contentInApp: "",
-            nodeTree: {},
-            selectedNodeUids: [],
-          };
+
+      if (ext === "html") {
+        const document = htmlService.parseHtml(currentFileContent);
+        const { complexNodeTree, document: previewDocument } =
+          htmlService.createNodeTree(document);
+        if (previewDocument) {
+          const previewContent = serialize(previewDocument);
+          dispatch(
+            setCurrentPageNewNodeTreeThunk({
+              nodeTree: complexNodeTree,
+              previewContent,
+            }),
+          );
+
+          fileData.contentInApp = previewContent;
+        }
+      }
+      const { nodeTree, selectedNodeUids: selectedNodeUidsAfterActions } =
+        ext === "html"
+          ? await parseHtml(
+              currentFileContent,
+              maxNodeUidRef.current,
+              nodeUidPositions,
+              setMaxNodeUidRef,
+            )
+          : {
+              nodeTree: {},
+              selectedNodeUids: [],
+            };
 
       fileData.content = currentFileContent;
 
-      fileData.contentInApp = contentInApp;
+      // fileData.contentInApp = contentInApp;
 
       fileData.changed = fileData.content !== fileData.orgContent;
 
@@ -175,9 +190,11 @@ export const useNodeTreeEvent = () => {
           dispatch(
             setCurrentPage({
               uid: currentFileUid,
-              previewPath: fileData.path,
-              previewUrl: `rnbw${previewPath}`,
-              previewContent: fileData.contentInApp,
+              designViewState: {
+                previewPath: fileData.path,
+                previewUrl: `rnbw${previewPath}`,
+                previewContent: fileData.contentInApp || "",
+              },
               nodeTree: nodeTree,
             }),
           );
@@ -195,84 +212,84 @@ export const useNodeTreeEvent = () => {
       // ---
 
       // sync stage-view
-      if (prevFileUid === currentFileUid) {
-        // dom-diff using morph
-        if (fileData.ext === "html") {
-          const iframe: HTMLIFrameElement | null = document.getElementById(
-            "iframeId",
-          ) as HTMLIFrameElement;
+      // if (prevFileUid === currentFileUid) {
+      //   // dom-diff using morph
+      //   if (fileData.ext === "html") {
+      //     const iframe: HTMLIFrameElement | null = document.getElementById(
+      //       "iframeId",
+      //     ) as HTMLIFrameElement;
 
-          if (iframe) {
-            const iframeDoc = iframe.contentDocument;
-            if (!iframeDoc) {
-              dispatch(removeRunningAction());
-              return;
-            }
-            const iframeHtml = iframeDoc.getElementsByTagName("html")[0];
-            const documentHtml = iframeDoc.documentElement;
+      //     if (iframe) {
+      //       const iframeDoc = iframe.contentDocument;
+      //       if (!iframeDoc) {
+      //         dispatch(removeRunningAction());
+      //         return;
+      //       }
+      //       const iframeHtml = iframeDoc.getElementsByTagName("html")[0];
+      //       const documentHtml = iframeDoc.documentElement;
 
-            const updatedHtml = contentInApp;
-            if (!iframeHtml || !updatedHtml) {
-              dispatch(removeRunningAction());
-              return;
-            }
+      //       const updatedHtml = contentInApp;
+      //       if (!iframeHtml || !updatedHtml) {
+      //         dispatch(removeRunningAction());
+      //         return;
+      //       }
 
-            try {
-              // Parse the updatedHtml string into a DOM node
-              const parser = new DOMParser();
-              const newDoc = parser.parseFromString(
-                updatedHtml as string,
-                "text/html",
-              );
+      //       try {
+      //         // Parse the updatedHtml string into a DOM node
+      //         const parser = new DOMParser();
+      //         const newDoc = parser.parseFromString(
+      //           updatedHtml as string,
+      //           "text/html",
+      //         );
 
-              const newContent = newDoc.documentElement; // Get the root element
+      //         const newContent = newDoc.documentElement; // Get the root element
 
-              // Now use newContent with Idiomorph
-              Idiomorph.morph(documentHtml, newContent.innerHTML, {
-                morphStyle: "innerHTML",
-                head: { style: "morph" },
-                callbacks: {
-                  beforeNodeRemoved: (node: Element) => {
-                    try {
-                      const isPreserve = node.getAttribute("im-preserve");
+      //         // Now use newContent with Idiomorph
+      //         // Idiomorph.morph(documentHtml, newContent.innerHTML, {
+      //         //   morphStyle: "innerHTML",
+      //         //   head: { style: "morph" },
+      //         //   callbacks: {
+      //         //     beforeNodeRemoved: (node: Element) => {
+      //         //       try {
+      //         //         const isPreserve = node.getAttribute("im-preserve");
 
-                      if (isPreserve) {
-                        return false;
-                      }
-                    } catch (err) {
-                      console.error(err);
-                    }
-                    return true;
-                  },
-                  beforeNodeMorphed: (oldNode: Element, newNode: Node) => {
-                    // Handle custom elements specifically
-                    try {
-                      if (
-                        oldNode.tagName.includes("-") ||
-                        (newNode instanceof HTMLElement &&
-                          newNode.tagName.includes("-"))
-                      ) {
-                        // Custom logic for web components
-                        return false; // Prevent morphing if necessary
-                      }
-                      return true;
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  },
-                },
-              });
+      //         //         if (isPreserve) {
+      //         //           return false;
+      //         //         }
+      //         //       } catch (err) {
+      //         //         console.error(err);
+      //         //       }
+      //         //       return true;
+      //         //     },
+      //         //     beforeNodeMorphed: (oldNode: Element, newNode: Node) => {
+      //         //       // Handle custom elements specifically
+      //         //       try {
+      //         //         if (
+      //         //           oldNode.tagName.includes("-") ||
+      //         //           (newNode instanceof HTMLElement &&
+      //         //             newNode.tagName.includes("-"))
+      //         //         ) {
+      //         //           // Custom logic for web components
+      //         //           return false; // Prevent morphing if necessary
+      //         //         }
+      //         //         return true;
+      //         //       } catch (err) {
+      //         //         console.error(err);
+      //         //       }
+      //         //     },
+      //         //   },
+      //         // });
 
-              isCodeErrorsExist.current = false;
-            } catch (err) {
-              isCodeErrorsExist.current = false;
+      //         isCodeErrorsExist.current = false;
+      //       } catch (err) {
+      //         isCodeErrorsExist.current = false;
 
-              notify.info("error", "Some changes in the code are incorrect");
-              console.error(err, "error");
-            }
-          }
-        }
-      }
+      //         notify.info("error", "Some changes in the code are incorrect");
+      //         console.error(err, "error");
+      //       }
+      //     }
+      //   }
+      // }
 
       dispatch(setCodeErrors(isCodeErrorsExist.current));
       if (isCodeErrorsExist.current) {

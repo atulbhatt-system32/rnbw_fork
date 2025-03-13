@@ -1,10 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import * as monaco from "monaco-editor";
 import { loader } from "@monaco-editor/react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { RootNodeUid } from "@src/rnbwTSX";
+import { RootNodeUid } from "@src/constants";
 import {
   getDecorationUid,
   isUidDecoration,
@@ -30,7 +36,7 @@ export default function RnbwEditor() {
   const {
     fileTree,
     currentFileUid,
-    currentFileContent,
+    // currentFileContent,
     nodeUidPositions,
 
     nodeTree,
@@ -43,6 +49,10 @@ export default function RnbwEditor() {
     isCodeTyping,
     codeErrors,
   } = useAppState();
+
+  const currentFileContent = useSelector(
+    (state: AppState) => state.main.currentPage.content,
+  );
 
   const editorInstance = useSelector(
     (state: AppState) => state.main.editor.editorInstance,
@@ -63,6 +73,10 @@ export default function RnbwEditor() {
     codeSelection,
   } = useEditor();
 
+  const [editorModels, setEditorModels] = useState<{
+    [key: string]: monaco.editor.ITextModel;
+  }>({});
+
   editorInstance?.onKeyDown(handleKeyDown);
 
   // language sync
@@ -73,7 +87,19 @@ export default function RnbwEditor() {
     const fileData = file.data as TFileNodeData;
     const extension = fileData.ext;
     extension && updateLanguage(extension);
-  }, [fileTree, currentFileUid]);
+
+    // Create or switch model
+    const modelId = extension; // Use file UID as model ID
+    if (!editorModels[modelId]) {
+      const newModel = monaco.editor.createModel(currentFileContent, extension);
+      setEditorModels((prev) => ({ ...prev, [modelId]: newModel }));
+    } else {
+      const existingModel = editorModels[modelId];
+      existingModel.setValue(currentFileContent); // Update existing model content
+    }
+
+    editorInstance?.setModel(editorModels[modelId]); // Set the current model to the editor
+  }, [fileTree, currentFileUid, currentFileContent]);
 
   // scroll to top on file change
   useEffect(() => {
@@ -237,15 +263,11 @@ export default function RnbwEditor() {
     const editorModel = editorInstance?.getModel();
     if (!editorModel) return;
 
+    // Ensure the model's value is updated with the current file content
     if (editorModel.getValue() !== currentFileContent) {
-      if (!currentFileContent) {
-        editorModel.setValue("");
-        return;
-      } else {
-        editorModel.setValue(currentFileContent);
-      }
+      editorModel.setValue(currentFileContent);
     }
-  }, [currentFileContent]);
+  }, [currentFileContent, editorInstance]);
 
   // Sync decorations to track node positions
   useEffect(() => {
@@ -288,21 +310,22 @@ export default function RnbwEditor() {
     editorModel.deltaDecorations(oldDecorations, newDecorations);
   }, [nodeUidPositions]);
 
-  const memoizedEditorConfigs = useMemo(() => {
-    return {
-      ...editorConfigs,
-      wordWrap: wordWrap ? "on" : ("off" as "on" | "off"),
-    };
-  }, [wordWrap]);
+  useEffect(() => {
+    console.log("currentFileContent", currentFileContent);
+  }, [currentFileContent]);
   return useMemo(() => {
     return (
       <Editor
-        onMount={handleEditorDidMount}
+        // onMount={handleEditorDidMount}
         theme={theme}
         language={language}
+        path={language}
         value={currentFileContent}
         onChange={(value) => handleOnChange(value, currentFileUid)}
-        options={memoizedEditorConfigs}
+        options={{
+          ...editorConfigs,
+          wordWrap: wordWrap ? "on" : ("off" as "on" | "off"),
+        }}
       />
     );
   }, [
