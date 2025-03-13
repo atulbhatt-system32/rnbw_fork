@@ -2,13 +2,13 @@ import { useEffect } from "react";
 
 import { useDispatch } from "react-redux";
 
-import { LogAllow } from "@src/rnbwTSX";
+import { LogAllow } from "@src/constants";
 import { setOsType, setTheme } from "@_redux/global";
 import { setDoingFileAction, TProjectContext } from "@_redux/main/fileTree";
 import { isChromeOrEdge } from "../rnbw";
 
 import { setSystemTheme } from "../helper";
-
+import projectService from "@src/services/project.service";
 interface IUseInit {
   importProject: (
     fsType: TProjectContext,
@@ -16,7 +16,7 @@ interface IUseInit {
   ) => Promise<void>;
   onNew: () => Promise<void>;
 }
-export const useInit = ({ importProject, onNew }: IUseInit) => {
+export const useInit = ({ onNew }: IUseInit) => {
   const dispatch = useDispatch();
 
   // detect os
@@ -77,7 +77,8 @@ export const useInit = ({ importProject, onNew }: IUseInit) => {
       (async () => {
         dispatch(setDoingFileAction(true));
         try {
-          await importProject("idb");
+          // await importProject("idb");
+          await projectService.loadDefaultProject();
           LogAllow && console.log("loaded idb project");
         } catch (err) {
           LogAllow && console.log("failed to load idb project");

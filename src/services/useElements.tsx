@@ -1,6 +1,5 @@
-import { LogAllow } from "@src/rnbwTSX";
-import { RootNodeUid } from "@src/rnbwTSX";
-import { StageNodeIdAttr } from "@_api/file";
+import { LogAllow, RootNodeUid } from "@src/constants";
+import { StageNodeIdAttr } from "@src/constants";
 
 import { getObjKeys } from "@src/helper";
 import { MainContext } from "@_redux/main";
@@ -34,6 +33,7 @@ import * as parse5 from "parse5";
 import { setIsContentProgrammaticallyChanged } from "@_redux/main/reference";
 import { notify } from "./notificationService";
 
+import { morphCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
 export default function useElements() {
   const {
     nSelectedItemsObj,
@@ -146,6 +146,13 @@ export default function useElements() {
         });
         await dispatch(setIsContentProgrammaticallyChanged(true));
         setEditorModelValue(helperModel, codeViewInstanceModel);
+        dispatch(
+          morphCurrentPage({
+            content: helperModel.getValue(),
+            previewContent: helperModel.getValue(),
+            nodeTree: validNodeTree,
+          }),
+        );
       }
     }
   };
@@ -184,6 +191,13 @@ export default function useElements() {
       });
       await dispatch(setIsContentProgrammaticallyChanged(true));
       setEditorModelValue(helperModel, codeViewInstanceModel);
+      dispatch(
+        morphCurrentPage({
+          content: helperModel.getValue(),
+          previewContent: helperModel.getValue(),
+          nodeTree: validNodeTree,
+        }),
+      );
     }
   };
 
@@ -262,6 +276,13 @@ export default function useElements() {
     );
 
     setEditorModelValue(helperModel, codeViewInstanceModel);
+    dispatch(
+      morphCurrentPage({
+        content: helperModel.getValue(),
+        previewContent: helperModel.getValue(),
+        nodeTree: validNodeTree,
+      }),
+    );
     return {
       copiedCode,
       sortedUids,
@@ -360,6 +381,13 @@ export default function useElements() {
         },
       });
       setEditorModelValue(helperModel, codeViewInstanceModel);
+      dispatch(
+        morphCurrentPage({
+          content: helperModel.getValue(),
+          previewContent: helperModel.getValue(),
+          nodeTree: validNodeTree,
+        }),
+      );
     }
   };
 
@@ -412,6 +440,13 @@ export default function useElements() {
     helperModel.applyEdits([edit]);
     if (!skipUpdate) {
       setEditorModelValue(helperModel, codeViewInstanceModel);
+      dispatch(
+        morphCurrentPage({
+          content: helperModel.getValue(),
+          previewContent: helperModel.getValue(),
+          nodeTree: validNodeTree,
+        }),
+      );
     }
   };
 
@@ -495,6 +530,13 @@ export default function useElements() {
     }
     if (!skipUpdate) {
       setEditorModelValue(helperModel, codeViewInstanceModel);
+      dispatch(
+        morphCurrentPage({
+          content: helperModel.getValue(),
+          previewContent: helperModel.getValue(),
+          nodeTree: validNodeTree,
+        }),
+      );
       dispatch(setNeedToSelectNodePaths(allNodePathsToSelect));
     }
   };
@@ -569,7 +611,13 @@ export default function useElements() {
     }
 
     setEditorModelValue(helperModel, codeViewInstanceModel);
-
+    dispatch(
+      morphCurrentPage({
+        content: helperModel.getValue(),
+        previewContent: helperModel.getValue(),
+        nodeTree: validNodeTree,
+      }),
+    );
     const targetPath = validNodeTree[focusedItem].uniqueNodePath;
     let movedNodePaths = sortedUids
       .slice(focusedNodeIndexInSortedUids + 1)
@@ -735,6 +783,13 @@ export default function useElements() {
       }
       await dispatch(setIsContentProgrammaticallyChanged(true));
       setEditorModelValue(helperModel, codeViewInstanceModel);
+      dispatch(
+        morphCurrentPage({
+          content: helperModel.getValue(),
+          previewContent: helperModel.getValue(),
+          nodeTree: validNodeTree,
+        }),
+      );
       if (eventSource === "esc") {
         const uniqueNodePath = focusedNode.uniqueNodePath;
         uniqueNodePath && dispatch(setNeedToSelectNodePaths([uniqueNodePath]));
@@ -793,6 +848,13 @@ export default function useElements() {
       });
       await dispatch(setIsContentProgrammaticallyChanged(true));
       setEditorModelValue(helperModel, codeViewInstanceModel);
+      dispatch(
+        morphCurrentPage({
+          content: helperModel.getValue(),
+          previewContent: helperModel.getValue(),
+          nodeTree: validNodeTree,
+        }),
+      );
     }
 
     return { isSuccess: true, settings };
@@ -876,6 +938,13 @@ export default function useElements() {
       await dispatch(setIsContentProgrammaticallyChanged(true));
       if (helperModel !== textModel) {
         setEditorModelValue(helperModel, codeViewInstanceModel);
+        dispatch(
+          morphCurrentPage({
+            content: helperModel.getValue(),
+            previewContent: helperModel.getValue(),
+            nodeTree: validNodeTree,
+          }),
+        );
       }
     }
   };

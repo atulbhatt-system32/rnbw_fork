@@ -5,13 +5,9 @@ import { del } from "idb-keyval";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import { LogAllow } from "@src/rnbwTSX";
-import { DefaultProjectPath } from "@src/rnbwTSX";
-import {
-  confirmFileChanges,
-  downloadIDBProject,
-  initIDBProject,
-} from "@_api/index";
+import { LogAllow } from "@src/constants";
+import { DefaultProjectPath } from "@src/constants";
+import { confirmFileChanges, downloadIDBProject } from "@_api/index";
 import { setShowCodePanel, setShowTreePanel, setTheme } from "@_redux/global";
 import { setCmdkPages, setCurrentCommand } from "@_redux/main/cmdk";
 import { setDoingFileAction, TProjectContext } from "@_redux/main/fileTree";
@@ -73,7 +69,8 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
 
     dispatch(setDoingFileAction(true));
     try {
-      await initIDBProject(DefaultProjectPath);
+      // await initIDBProject(DefaultProjectPath);
+      await projectService.initWelcomeProject();
       await importProject("idb");
     } catch (err) {
       LogAllow && console.log("failed to init/load idb project");

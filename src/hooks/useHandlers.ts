@@ -4,12 +4,12 @@ import { set } from "idb-keyval";
 import { useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { LogAllow } from "@src/rnbwTSX";
 import {
+  LogAllow,
   DefaultProjectPath,
   RecentProjectCount,
   RootNodeUid,
-} from "@src/rnbwTSX";
+} from "@src/constants";
 import {
   buildNohostIDB,
   createURLPath,
@@ -43,6 +43,8 @@ import {
   setFileHandlers,
   setRecentProject,
 } from "@_redux/main/project";
+
+import projectService from "@src/services/project.service";
 
 export const useHandlers = () => {
   const { currentProjectFileHandle } = useAppState();
@@ -130,18 +132,12 @@ export const useHandlers = () => {
               projectHandle as FileSystemDirectoryHandle,
             ),
           );
-          // const persistProcessor = JSON.parse(
-          //   "" + localStorage.getItem("persist:processor"),
-          // );
-          // if (persistProcessor.formatCode == "true") {
-          //   _fileTree[_initialFileUidToOpen].data.content = html_beautify(
-          //     _fileTree[_initialFileUidToOpen].data.content,
-          //   );
-          // }
 
           dispatch(setFileTree(_fileTree));
           dispatch(setInitialFileUidToOpen(_initialFileUidToOpen));
           dispatch(setFileHandlers(_fileHandlers));
+
+          projectService.openFile(_fileTree[_initialFileUidToOpen], _fileTree);
 
           await saveRecentProject(
             fsType,
@@ -179,8 +175,6 @@ export const useHandlers = () => {
           dispatch(setFileTree(_fileTree));
           dispatch(setInitialFileUidToOpen(_initialFileUidToOpen));
           dispatch(setFileHandlers({}));
-
-          // await saveRecentProject(fsType, null);
         } catch (err) {
           LogAllow && console.log("ERROR while importing IDB project", err);
         }
