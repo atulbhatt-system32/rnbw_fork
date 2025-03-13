@@ -3,13 +3,13 @@ import { useCallback, useContext, useMemo } from "react";
 import { TreeItem } from "react-complex-tree";
 import { useDispatch, useSelector } from "react-redux";
 
-import { LogAllow } from "@src/rnbwTSX";
 import {
   FileChangeAlertMessage,
+  LogAllow,
   RenderableFileTypes,
   RootNodeUid,
   TmpFileNodeUidWhenAddNew,
-} from "@src/rnbwTSX";
+} from "@src/constants";
 import { FileActions } from "@_api/apis";
 import {
   _path,

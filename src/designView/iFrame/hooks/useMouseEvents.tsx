@@ -1,8 +1,7 @@
 import { useCallback, useContext, useRef } from "react";
 import { useDispatch } from "react-redux";
 
-import { LogAllow } from "@src/rnbwTSX";
-import { ShortDelay } from "@src/rnbwTSX";
+import { LogAllow, ShortDelay } from "@src/constants";
 import { getValidNodeUids } from "@_api/helpers";
 import { THtmlNodeData } from "@_api/node";
 import { MainContext } from "@_redux/main";

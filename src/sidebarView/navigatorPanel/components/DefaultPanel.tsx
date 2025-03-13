@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { SVGIcon } from "@src/components";
-import { RootNodeUid } from "@src/rnbwTSX";
+import { RootNodeUid } from "@src/constants";
 import { useAppState } from "@_redux/useAppState";
 
 import { getFileExtension, getFileNameFromPath, isHomeIcon } from "../helpers";

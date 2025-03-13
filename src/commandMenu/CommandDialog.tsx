@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Command } from "cmdk";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { LogAllow } from "@src/rnbwTSX";
-import { AddActionPrefix, RenameActionPrefix } from "@src/rnbwTSX";
+import { LogAllow, AddActionPrefix, RenameActionPrefix } from "@src/constants";
 import { confirmFileChanges, TFileNodeData } from "@_api/file";
 import {
   setCmdkOpen,

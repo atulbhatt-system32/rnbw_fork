@@ -3,7 +3,7 @@ import { getSystemTheme } from "../rnbw";
 import { TCodeSelection } from "./types";
 import { TNodeTreeData, TNodeUid } from "@_api/types";
 import { getSubNodeUidsByBfs } from "@_api/helpers";
-import { RootNodeUid } from "@src/rnbwTSX";
+import { RootNodeUid } from "@src/constants";
 
 export const getLanguageFromExtension = (extension: string) => {
   const extensionMap: { [key: string]: string } = {

@@ -6,7 +6,7 @@ import { useAppState } from "@_redux/useAppState";
 import { useContext, useMemo } from "react";
 import { MainContext } from "@_redux/main";
 import { elementsCmdk, getObjKeys } from "@src/helper";
-import { LogAllow, RainbowAppName } from "@src/rnbwTSX";
+import { LogAllow, RainbowAppName, RootNodeUid } from "@src/constants";
 
 import {
   THtmlDomNode,
@@ -23,7 +23,6 @@ import {
   TNodeUid,
   TValidNodeUid,
 } from "@_api/index";
-import { RootNodeUid } from "@src/rnbwTSX";
 import { useDispatch } from "react-redux";
 import {
   focusNodeTreeNode,

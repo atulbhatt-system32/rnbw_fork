@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { useDispatch } from "react-redux";
 
-import { FileChangeAlertMessage } from "@src/rnbwTSX";
+import { FileChangeAlertMessage } from "@src/constants";
 import {
   confirmAlert,
   getFullnameFromUid,

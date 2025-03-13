@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { editor, KeyCode, KeyMod, Selection } from "monaco-editor";
 import { useDispatch, useSelector } from "react-redux";
 
-import { CodeViewSyncDelay_Long, DefaultTabSize } from "@src/rnbwTSX";
+import { CodeViewSyncDelay_Long, DefaultTabSize } from "@src/constants";
 import { MainContext } from "@_redux/main";
 import { setCodeViewTabSize } from "@_redux/main/codeView";
 import {
