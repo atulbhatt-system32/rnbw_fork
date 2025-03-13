@@ -2,14 +2,15 @@ import { Buffer } from "buffer";
 import { FileSystemFileHandle } from "file-system-access";
 import JSZip from "jszip";
 
-import { LogAllow } from "@src/rnbwTSX";
+import { LogAllow } from "@src/constants";
 import {
   ParsableFileTypes,
   RootNodeUid,
   StagePreviewPathPrefix,
-} from "@src/rnbwTSX";
+} from "@src/constants";
+
 import { TOsType } from "@src/types";
-import { SystemDirectories } from "../../commandMenu/SystemDirectories";
+
 import { verifyFileHandlerPermission } from "../../rnbw";
 
 import {
@@ -45,6 +46,7 @@ import {
 import { TFileHandlerInfo, TFileHandlerInfoObj, TZipFileInfo } from "./types";
 
 import { notify } from "@src/services/notificationService";
+import projectService from "@src/services/project.service";
 
 export const initIDBProject = (projectPath: string): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
@@ -130,6 +132,7 @@ export const loadIDBProject = async (
         dirHandlers.shift() as TFileHandlerInfo;
 
       const entries = await _readIDBDirectory(p_path);
+
       await Promise.all(
         entries.map(async (entry) => {
           // skip stage preview files & hidden files
@@ -268,57 +271,61 @@ export const loadLocalProject = async (
     const dirHandlers: TFileHandlerInfo[] = [rootHandler];
     while (dirHandlers.length) {
       const {
-        uid: p_uid,
-        path: p_path,
-        handler: p_handler,
+        uid: parentUid,
+        path: parentPath,
+        handler: parentHandler,
       } = dirHandlers.shift() as TFileHandlerInfo;
 
       for await (const entry of (
-        p_handler as FileSystemDirectoryHandle
+        parentHandler as FileSystemDirectoryHandle
       ).values()) {
         // skip system directories & hidden files
-        if (SystemDirectories[osType][entry.name] || entry.name[0] === ".")
+        if (projectService.ifDirectoryShouldBeHidden(entry.name, osType))
           continue;
 
         // build c_handler
-        const c_uid = _path.join(p_uid, entry.name) as string;
-        const c_path = _path.join(p_path, entry.name) as string;
+        const childUid = _path.join(parentUid, entry.name) as string;
+        const childPath = _path.join(parentPath, entry.name) as string;
 
-        const c_kind = entry.kind;
+        const childKind = entry.kind;
 
-        const nameArr = entry.name.split(".");
-        const c_ext = nameArr.length > 1 ? nameArr.pop() : undefined;
-        const c_name = nameArr.join(".");
+        const isDirectory = entry.kind === "directory";
+        let nodeName = entry.name;
+        let extension = "";
+        if (!isDirectory) {
+          nodeName = projectService.getFileNameWithoutExtension(entry.name);
+          extension = projectService.getFileExtension(entry.name);
+        }
 
         let c_content: Uint8Array | undefined = undefined;
-        if (c_kind === "file") {
+        if (childKind === "file") {
           const fileEntry = await (entry as FileSystemFileHandle).getFile();
           c_content = Buffer.from(await fileEntry.arrayBuffer());
         }
 
         const c_handlerInfo: TFileHandlerInfo = {
-          uid: c_uid,
-          parentUid: p_uid,
+          uid: childUid,
+          parentUid: parentUid,
           children: [],
 
-          path: c_path,
-          kind: c_kind,
-          name: c_kind === "directory" ? entry.name : c_name,
+          path: childPath,
+          kind: childKind,
+          name: nodeName,
 
-          ext: c_ext,
+          ext: extension,
           content: c_content,
 
           handler: entry,
         };
 
         // update handler-arr, handler-obj
-        handlerObj[p_uid].children.push(c_uid);
-        handlerObj[c_uid] = c_handlerInfo;
+        handlerObj[parentUid].children.push(childUid);
+        handlerObj[childUid] = c_handlerInfo;
         handlerArr.push(c_handlerInfo);
-        c_kind === "directory" && dirHandlers.push(c_handlerInfo);
+        childKind === "directory" && dirHandlers.push(c_handlerInfo);
 
         // remove c_uid from deletedUids array
-        delete deletedUidsObj[c_uid];
+        delete deletedUidsObj[childUid];
       }
     }
 
