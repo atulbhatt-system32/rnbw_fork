@@ -5,7 +5,7 @@ import { DraggingPositionItem } from "react-complex-tree";
 import { useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { RootNodeUid } from "@src/rnbwTSX";
+import { RootNodeUid } from "@src/constants";
 import { TreeView } from "@src/components";
 import {
   getNormalizedPath,
@@ -94,15 +94,15 @@ export default function WorkspaceTreeView() {
     (uid: TNodeUid) => {
       if (currentFileUid === uid) return;
       // focus/select/read the file
-      cb_focusNode(uid);
-      cb_selectNode([uid]);
+      // cb_focusNode(uid);
+      // cb_selectNode([uid]);
       cb_readNode(uid);
-      const newURL = createURLPath(
-        uid,
-        RootNodeUid,
-        fileTree[RootNodeUid]?.displayName,
-      );
-      navigate(newURL);
+      // const newURL = createURLPath(
+      //   uid,
+      //   RootNodeUid,
+      //   fileTree[RootNodeUid]?.displayName,
+      // );
+      // navigate(newURL);
     },
     [fileTree, cb_focusNode, cb_selectNode, cb_readNode, currentFileUid],
   );
@@ -499,7 +499,7 @@ export default function WorkspaceTreeView() {
             if (item.data.data.valid) {
               const uid = item.index as TNodeUid;
               const file = fileTree[uid];
-              projectService.openFile(file);
+              projectService.openFile(file, fileTree);
             }
           },
 

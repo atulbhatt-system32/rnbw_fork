@@ -8,16 +8,15 @@ import React, {
   useState,
 } from "react";
 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { TreeView } from "@src/components";
-import { TreeViewData } from "@src/sidebarView/treeView/types";
-import { DargItemImage, RootNodeUid } from "@src/rnbwTSX";
+
+import { DargItemImage } from "@src/constants";
 import { THtmlNodeData } from "@_api/index";
-import { TNode, TNodeUid } from "@_api/types";
+import { TNodeUid } from "@_api/types";
 import {
   debounce,
-  getObjKeys,
   isWebComponentDblClicked,
   onWebComponentDblClick,
   scrollToElement,
@@ -26,7 +25,6 @@ import {
 import {
   collapseNodeTreeNodes,
   expandNodeTreeNodes,
-  setHoveredNodeUid,
 } from "@_redux/main/nodeTree";
 import {
   setActivePanel,
@@ -37,7 +35,7 @@ import { getCommandKey } from "../../rnbw";
 
 import { useCmdk } from "./hooks/useCmdk";
 import { useNodeTreeCallback } from "./hooks/useNodeTreeCallback";
-import { useNodeViewState } from "./hooks/useNodeViewState";
+
 import { DragBetweenLine } from "./nodeTreeComponents/DragBetweenLine";
 import { NodeIcon } from "./nodeTreeComponents/NodeIcon";
 import {
@@ -48,6 +46,13 @@ import {
 } from "@src/sidebarView/treeComponents";
 import { useNavigate } from "react-router-dom";
 import { THtmlElementsReference } from "@rnbws/rfrncs.design";
+import { AppState } from "@src/_redux/store";
+import { TreeNodeData } from "@src/types/html.types";
+import {
+  setExpandedNodeUidsThunk,
+  setHoveredNodeUidThunk,
+} from "@src/_redux/main/currentPage/currentPage.thunk";
+import { setHoveredNodeUid } from "@src/_redux/main/currentPage/currentPage.slice";
 
 const AutoExpandDelayOnDnD = 1 * 1000;
 const dragAndDropConfig = {
@@ -74,13 +79,15 @@ const NodeTreeView = () => {
     validNodeTree,
 
     nFocusedItem: focusedItem,
-    nExpandedItemsObj,
-    nSelectedItemsObj,
-    hoveredNodeUid,
 
     fExpandedItemsObj,
     htmlReferenceData,
   } = useAppState();
+  const newNodeTree = useSelector(
+    (state: AppState) => state.main.currentPage.newNodeTree,
+  );
+  const { selectedNodeUids, focusedNodeUid, expandedNodeUids, hoveredNodeUid } =
+    useSelector((state: AppState) => state.main.currentPage.nodeTreeViewState);
   const navigate = useNavigate();
   // ------ sync ------
   // cmdk
@@ -128,25 +135,25 @@ const NodeTreeView = () => {
   }, [focusedItem]);
 
   // build nodeTreeViewData
-  const nodeTreeViewData = useMemo(() => {
-    const data: TreeViewData = {};
-    for (const uid in validNodeTree) {
-      const node = validNodeTree[uid];
-      data[uid] = {
-        index: node.uid,
-        data: node,
-        children: node.children,
-        isFolder: !node.isEntity,
-        canMove: uid !== RootNodeUid,
-        canRename: uid !== RootNodeUid,
-      };
-    }
+  // const nodeTreeViewData = useMemo(() => {
+  //   const data: TreeViewData = {};
+  //   for (const uid in validNodeTree) {
+  //     const node = validNodeTree[uid];
+  //     data[uid] = {
+  //       index: node.uid,
+  //       data: node,
+  //       children: node.children,
+  //       isFolder: !node.isEntity,
+  //       canMove: uid !== RootNodeUid,
+  //       canRename: uid !== RootNodeUid,
+  //     };
+  //   }
 
-    return data;
-  }, [validNodeTree, nExpandedItemsObj]);
+  //   return data;
+  // }, [validNodeTree, nExpandedItemsObj]);
 
   // node view state handlers
-  const { cb_expandNode } = useNodeViewState();
+  // const { cb_expandNode } = useNodeViewState();
   const [nextToExpand, setNextToExpand] = useState<TNodeUid | null>(null);
 
   const onPanelClick = useCallback(() => {
@@ -184,10 +191,10 @@ const NodeTreeView = () => {
   const debouncedExpand = useCallback(
     debounce((uid) => {
       if (uid === nextToExpand) {
-        cb_expandNode(uid);
+        dispatch(setExpandedNodeUidsThunk([uid]));
       }
     }, AutoExpandDelayOnDnD),
-    [cb_expandNode, nextToExpand],
+    [nextToExpand],
   );
 
   return currentFileUid !== "" && !!htmlReferenceData ? (
@@ -217,19 +224,21 @@ const NodeTreeView = () => {
         width={"100%"}
         height={"auto"}
         info={{ id: "node-tree-view" }}
-        data={nodeTreeViewData}
-        focusedItem={focusedItem}
-        selectedItems={getObjKeys(nSelectedItemsObj)}
-        expandedItems={getObjKeys(nExpandedItemsObj)}
+        data={newNodeTree}
+        focusedItem={focusedNodeUid}
+        selectedItems={selectedNodeUids}
+        expandedItems={expandedNodeUids}
         renderers={{
           renderTreeContainer: (props) => <Container {...props} />,
           renderItemsContainer: (props) => <Container {...props} />,
           renderItem: (props) => {
             const htmlElementReferenceData =
               useMemo<THtmlElementsReference>(() => {
-                const node = props.item.data as TNode;
-                const nodeData = node.data as THtmlNodeData;
+                const node = props.item as TreeNodeData;
+
+                const nodeData = node.data;
                 let nodeName = nodeData.nodeName;
+
                 if (nodeName === "!doctype") {
                   nodeName = "!DOCTYPE";
                 } else if (nodeName === "#comment") {
@@ -237,7 +246,7 @@ const NodeTreeView = () => {
                 }
                 const refData = htmlReferenceData.elements[nodeName];
                 return refData;
-              }, [props.item.data, cb_expandNode]);
+              }, [props.item.data]);
 
             const onClick = useCallback(
               (e: React.MouseEvent) => {
@@ -274,15 +283,15 @@ const NodeTreeView = () => {
             );
 
             const onMouseEnter = () => {
-              let _uid = props?.item?.data?.uid;
+              let _uid = props?.item?.index;
               if (_uid === null || _uid === undefined) return;
-              let node = validNodeTree[_uid];
+              let node = newNodeTree[_uid];
               while (!_uid) {
-                _uid = node.parentUid;
-                !_uid ? (node = validNodeTree[_uid]) : null;
+                _uid = node.data.parentId;
+                !_uid ? (node = newNodeTree[_uid]) : null;
               }
               if (_uid && _uid !== hoveredNodeUid) {
-                dispatch(setHoveredNodeUid(_uid));
+                dispatch(setHoveredNodeUidThunk(_uid as string));
               }
             };
 
@@ -308,7 +317,7 @@ const NodeTreeView = () => {
             return (
               <TreeItem
                 {...props}
-                key={`NodeTreeView-${props.item.index}${props.item.data.data.nodeName}`}
+                key={`NodeTreeView-${props.item.index}${props?.item?.data?.nodeName}`}
                 id={`NodeTreeView-${props.item.index}`}
                 eventHandlers={{
                   onClick: onClick,
@@ -323,8 +332,8 @@ const NodeTreeView = () => {
                   <NodeIcon
                     {...{
                       htmlElementReferenceData,
-                      nodeName: props.item.data.data.nodeName,
-                      componentTitle: props.title,
+                      nodeName: props.item.data.nodeName,
+                      componentTitle: props.item.data.nodeName,
                     }}
                   />
                 }
