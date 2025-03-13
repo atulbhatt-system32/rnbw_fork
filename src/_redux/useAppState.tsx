@@ -11,7 +11,6 @@ export const useAppState = () => {
         project,
         initialFileUidToOpen,
         prevFileUid,
-        renderableFileUid,
         fileTree,
         fileTreeViewState: {
           focusedItem: fFocusedItem,
@@ -107,7 +106,6 @@ export const useAppState = () => {
     initialFileUidToOpen,
     currentFileUid,
     prevFileUid,
-    renderableFileUid,
     fileTree,
 
     fFocusedItem,

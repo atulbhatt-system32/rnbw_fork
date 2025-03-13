@@ -1,4 +1,4 @@
-import { RootNodeUid } from "@src/rnbwTSX";
+import { RootNodeUid } from "@src/constants";
 import { parse } from "parse5";
 import { Document } from "parse5/dist/tree-adapters/default";
 import { notify } from "./notificationService";
@@ -170,11 +170,6 @@ function getInitialExpandedNodesFromNodeTree(nodeTree: TreeStructure) {
   return initialExpandedNodes;
 }
 
-function createPreviewContent() {
-  const previewContent = "";
-  return previewContent;
-}
-
 function scrollToElement(uid: string) {
   const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
   const element = iframe?.contentWindow?.document?.querySelector(
@@ -325,7 +320,6 @@ function makeAllEditableNodesNonEditable() {
 export default {
   parseHtml,
   createNodeTree,
-  createPreviewContent,
   getInitialExpandedNodesFromNodeTree,
   markSelectedElements,
   markHoveredElement,
