@@ -17,13 +17,13 @@ export const getLanguageFromExtension = (extension: string) => {
 
 export const getCodeViewTheme = (theme: TTheme) => {
   let _theme = theme;
-  if (theme === "System") {
+  if (theme === "system") {
     _theme = getSystemTheme();
   }
 
-  if (_theme === "Dark") {
+  if (_theme === "dark") {
     return "vs-dark";
-  } else if (_theme === "Light") {
+  } else if (_theme === "light") {
     return "light";
   }
 };

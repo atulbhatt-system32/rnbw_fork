@@ -46,3 +46,4 @@ DargItemImage.src =
 
 export const RainbowAppName = "rnbw";
 export const LogAllow = true;
+export const BrowserUnsupportedMessage = `Browser is unsupported. rnbw works in the latest versions of Google Chrome and Microsoft Edge.`;

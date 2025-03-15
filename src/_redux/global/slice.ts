@@ -4,7 +4,7 @@ import { TGlobalReducerState, TOsType, TPanelsState, TTheme } from "@src/types";
 
 const globalReducerInitialState: TGlobalReducerState = {
   osType: "Windows",
-  theme: "System",
+  theme: "system",
   panelsState: {
     showCodePanel: true,
     showTreePanel: true,

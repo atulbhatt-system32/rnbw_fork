@@ -154,19 +154,19 @@ export const useCmdk = ({ cmdkReferenceData, importProject }: IUseCmdk) => {
   }, []);
   const onToggleTheme = useCallback(() => {
     switch (theme) {
-      case "System":
+      case "system":
         document.documentElement.setAttribute("data-theme", "light");
         localStorage.setItem("theme", "light");
-        dispatch(setTheme("Light"));
+        dispatch(setTheme("light"));
         break;
-      case "Light":
+      case "light":
         document.documentElement.setAttribute("data-theme", "dark");
         localStorage.setItem("theme", "dark");
-        dispatch(setTheme("Dark"));
+        dispatch(setTheme("dark"));
         break;
-      case "Dark":
+      case "dark":
         localStorage.removeItem("theme");
-        dispatch(setTheme("System"));
+        dispatch(setTheme("system"));
         setSystemTheme();
         break;
       default:

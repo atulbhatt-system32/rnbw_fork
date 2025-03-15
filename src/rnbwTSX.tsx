@@ -17,7 +17,7 @@ import { MainContext } from "@_redux/main";
 import { setCurrentCommand } from "@_redux/main/cmdk";
 import { useAppState } from "@_redux/useAppState";
 
-import { useCmdk, useHandlers, useInit, useReferneces } from "@src/hooks";
+import { useCmdk, useHandlers, useReferneces } from "@src/hooks";
 import Processor from "@src/processor";
 import ResizablePanels from "@_components/ResizablePanels";
 import { debounce } from "@src/helper";
@@ -26,6 +26,8 @@ import { TNodeUid, TValidNodeUid } from "@_api/index";
 import NotificationContainer from "@src/features/notification";
 import { initRnbwServices } from "./services/rnbw.services";
 import { CodeViewSyncDelay, LogAllow } from "./constants";
+import globalService from "./services/global.service";
+import projectService from "./services/project.service";
 
 // Constants
 
@@ -41,7 +43,6 @@ function MainPage() {
     cmdkReferenceData,
     importProject,
   });
-  useInit({ importProject, onNew });
 
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const prevFocusedElement = React.useRef<HTMLElement | null>(
@@ -62,13 +63,6 @@ function MainPage() {
   };
 
   const INTERVAL_TIMER = 2000;
-
-  useEffect(() => {
-    window.onbeforeunload = isUnsavedProject(fileTree) ? () => "changed" : null;
-    return () => {
-      window.onbeforeunload = null;
-    };
-  }, [fileTree]);
 
   const debouncedCurrentProjectReload = useCallback(() => {
     debounce(reloadCurrentProject, CodeViewSyncDelay)();
@@ -153,6 +147,21 @@ function MainPage() {
     handleBlurChange,
     iframeRefRef,
   ]);
+
+  useEffect(function init() {
+    globalService.initRnbw();
+    if (globalService.isUserNewbie()) {
+      onNew();
+    } else {
+      projectService.loadDefaultProject();
+    }
+  }, []);
+  useEffect(() => {
+    window.onbeforeunload = isUnsavedProject(fileTree) ? () => "changed" : null;
+    return () => {
+      window.onbeforeunload = null;
+    };
+  }, [fileTree]);
 
   useEffect(() => {
     addEventListeners();

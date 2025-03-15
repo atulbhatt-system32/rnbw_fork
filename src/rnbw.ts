@@ -45,9 +45,9 @@ export const getSystemTheme = (): TTheme => {
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches
   ) {
-    return "Dark";
+    return "dark";
   } else {
-    return "Light";
+    return "light";
   }
 };
 

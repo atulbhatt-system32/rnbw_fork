@@ -5,7 +5,7 @@ export type TGlobalReducerState = {
 };
 
 export type TOsType = "Windows" | "Mac" | "Linux";
-export type TTheme = "Light" | "Dark" | "System";
+export type TTheme = "light" | "dark" | "system";
 export type TPanelsState = {
   showCodePanel: boolean;
   showTreePanel: boolean;
