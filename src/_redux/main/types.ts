@@ -27,10 +27,6 @@ export type TUpdateTreeViewStatePayload = {
 export type TMainContext = {
   maxNodeUidRef: MutableRefObject<TValidNodeUid>;
   setMaxNodeUidRef: (maxNodeUid: TValidNodeUid) => void;
-  monacoEditorRef: IEditorRef;
-  setMonacoEditorRef: (
-    editorInstance: editor.IStandaloneCodeEditor | null,
-  ) => void;
 
   contentEditableUidRef: MutableRefObject<TNodeUid>;
   setContentEditableUidRef: (uid: TNodeUid) => void;

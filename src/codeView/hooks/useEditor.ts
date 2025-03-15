@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
-import { editor, KeyCode, KeyMod, Selection } from "monaco-editor";
+import { editor, Selection } from "monaco-editor";
 import { useDispatch, useSelector } from "react-redux";
 
 import { CodeViewSyncDelay_Long, DefaultTabSize } from "@src/constants";
@@ -33,12 +33,7 @@ const useEditor = () => {
     fileTree,
     activePanel,
   } = useAppState();
-  const {
-    setMonacoEditorRef,
-
-    onUndo,
-    onRedo,
-  } = useContext(MainContext);
+  const { onUndo, onRedo } = useContext(MainContext);
 
   /* we need to keep the state of the app in a ref
   because onChange closure is not updated when the state changes */
@@ -103,44 +98,44 @@ const useEditor = () => {
   // handlerEditorDidMount
   const handleEditorDidMount = useCallback(
     (editor: editor.IStandaloneCodeEditor) => {
-      setMonacoEditorRef(editor);
+      // setMonacoEditorRef(editor);
       dispatch(setEditorInstance(editor));
       // override monaco-editor undo/redo
-      editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyZ, () => {
-        setUndoRedoToggle((prev) => ({
-          action: "undo",
-          toggle: !prev.toggle,
-        }));
-      });
-      editor.addCommand(KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyZ, () => {
-        setUndoRedoToggle((prev) => ({
-          action: "redo",
-          toggle: !prev.toggle,
-        }));
-      });
-      editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyY, () => {
-        setUndoRedoToggle((prev) => ({
-          action: "redo",
-          toggle: !prev.toggle,
-        }));
-      });
+      // editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyZ, () => {
+      //   setUndoRedoToggle((prev) => ({
+      //     action: "undo",
+      //     toggle: !prev.toggle,
+      //   }));
+      // });
+      // editor.addCommand(KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyZ, () => {
+      //   setUndoRedoToggle((prev) => ({
+      //     action: "redo",
+      //     toggle: !prev.toggle,
+      //   }));
+      // });
+      // editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyY, () => {
+      //   setUndoRedoToggle((prev) => ({
+      //     action: "redo",
+      //     toggle: !prev.toggle,
+      //   }));
+      // });
 
-      editor.onDidChangeCursorPosition((event) => {
-        const selection = editor.getSelection();
-        if (event.source === "mouse") {
-          if (selection && selection.isEmpty()) {
-            // setCodeSelection();
-            _setCodeSelection(selection);
-          }
-        } else if (event.source === "keyboard") {
-          // setCodeSelection();
-          if (selection && selection.isEmpty()) {
-            _setCodeSelection(selection);
-          } else {
-            _setCodeSelection(null);
-          }
-        }
-      });
+      // editor.onDidChangeCursorPosition((event) => {
+      //   const selection = editor.getSelection();
+      //   if (event.source === "mouse") {
+      //     if (selection && selection.isEmpty()) {
+      //       // setCodeSelection();
+      //       _setCodeSelection(selection);
+      //     }
+      //   } else if (event.source === "keyboard") {
+      //     // setCodeSelection();
+      //     if (selection && selection.isEmpty()) {
+      //       _setCodeSelection(selection);
+      //     } else {
+      //       _setCodeSelection(null);
+      //     }
+      //   }
+      // });
     },
     [setCodeSelection],
   );
@@ -213,7 +208,7 @@ const useEditor = () => {
   );
 
   // undo/redo
-  const [undoRedoToggle, setUndoRedoToggle] = useState<{
+  const [undoRedoToggle] = useState<{
     action: "none" | "undo" | "redo";
     toggle: boolean;
   }>({ action: "none", toggle: false });

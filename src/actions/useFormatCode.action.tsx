@@ -5,19 +5,21 @@ import { diff_match_patch } from "diff-match-patch";
 import { sortUidsByMaxEndIndex } from "@src/sidebarView/nodeTreeView/helpers";
 import { useAppState } from "@_redux/useAppState";
 import { PrettyCode, useElementHelper } from "@_services/useElementsHelper";
-import { useContext } from "react";
-import { MainContext } from "@src/_redux/main";
+import { useSelector } from "react-redux";
+import { AppState } from "@src/_redux/store";
 
 export default function useFormatCode() {
   const { validNodeTree } = useAppState();
-  const { monacoEditorRef } = useContext(MainContext);
+  const editorInstance = useSelector(
+    (state: AppState) => state.main.editor.editorInstance,
+  );
   const { setEditorModelValue, getEditorModelWithCurrentCode } =
     useElementHelper();
 
   const rnbw = useRnbw();
 
   async function formatCode() {
-    const codeViewInstanceModel = monacoEditorRef.current?.getModel();
+    const codeViewInstanceModel = editorInstance?.getModel();
     if (!codeViewInstanceModel) return;
 
     const helperModel = getEditorModelWithCurrentCode();

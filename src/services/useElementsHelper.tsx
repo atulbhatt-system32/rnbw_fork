@@ -3,8 +3,7 @@ import * as htmlParser from "prettier/plugins/html";
 import * as parse5 from "parse5";
 import { Range, editor } from "monaco-editor";
 import { useAppState } from "@_redux/useAppState";
-import { useContext, useMemo } from "react";
-import { MainContext } from "@_redux/main";
+import { useMemo } from "react";
 import { elementsCmdk, getObjKeys } from "@src/helper";
 import { LogAllow, RainbowAppName, RootNodeUid } from "@src/constants";
 
@@ -23,7 +22,7 @@ import {
   TNodeUid,
   TValidNodeUid,
 } from "@_api/index";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   focusNodeTreeNode,
   selectNodeTreeNodes,
@@ -34,6 +33,7 @@ import {
 import { TCmdkGroupData } from "@_types/main.types";
 import { notify } from "./notificationService";
 import { DataSequencedUid, StageNodeIdAttr } from "@src/constants";
+import { AppState } from "@src/_redux/store";
 
 export async function PrettyCode({
   code,
@@ -101,7 +101,9 @@ export const useElementHelper = () => {
     didUndo,
     htmlReferenceData,
   } = useAppState();
-  const { monacoEditorRef } = useContext(MainContext);
+  const editorInstance = useSelector(
+    (state: AppState) => state.main.editor.editorInstance,
+  );
   const dispatch = useDispatch();
   const selectedItems = useMemo(
     () => getObjKeys(nSelectedItemsObj),
@@ -111,7 +113,7 @@ export const useElementHelper = () => {
     /*The role of helperModel is to perform all the edit operations in it 
   without affecting the actual codeViewInstanceModel and then apply the changes 
   to the codeViewInstanceModel all at once.*/
-    const codeViewInstanceModel = monacoEditorRef.current?.getModel();
+    const codeViewInstanceModel = editorInstance?.getModel();
     const helperModel = editor.createModel("", "html");
     codeViewInstanceModel &&
       setEditorModelValue(codeViewInstanceModel, helperModel);
@@ -128,7 +130,7 @@ export const useElementHelper = () => {
     }
   }
   function checkAllResourcesAvailable() {
-    const codeViewInstanceModel = monacoEditorRef.current?.getModel();
+    const codeViewInstanceModel = editorInstance?.getModel();
     if (selectedItems.length === 0) return false;
     if (!codeViewInstanceModel) {
       LogAllow &&
@@ -177,7 +179,7 @@ export const useElementHelper = () => {
     pasteToClipboard?: boolean;
     sortDsc?: boolean;
   } = {}) {
-    const codeViewInstanceModel = monacoEditorRef.current?.getModel();
+    const codeViewInstanceModel = editorInstance?.getModel();
     const selected = selectedUids || selectedItems;
     const helperModel = textModel || getEditorModelWithCurrentCode();
 
@@ -228,7 +230,7 @@ export const useElementHelper = () => {
     currentNodeUidPositions: Map<TNodeUid, TNodePositionInfo>,
     callback?: (validNodeUid: TValidNodeUid) => void,
   ): Promise<THtmlParserResponse> => {
-    const codeViewInstanceModel = monacoEditorRef.current?.getModel();
+    const codeViewInstanceModel = editorInstance?.getModel();
     const uidDecorations = getUidDecorations(codeViewInstanceModel);
     const nodeUidPositions = new Map<TNodeUid, TNodePositionInfo>();
     let errorCount = 0;

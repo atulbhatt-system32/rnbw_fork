@@ -1,9 +1,9 @@
-import { useCallback, useContext } from "react";
+import { useCallback } from "react";
 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { LogAllow } from "@src/constants";
-import { MainContext } from "@_redux/main";
+import { AppState } from "@src/_redux/store";
 import { setCurrentCommand } from "@_redux/main/cmdk";
 import { getCommandKey } from "../../../rnbw";
 import { TCmdkKeyMap } from "@src/types";
@@ -17,7 +17,9 @@ import useRnbw from "@_services/useRnbw";
 export const useCmdk = () => {
   const dispatch = useDispatch();
   const rnbw = useRnbw();
-  const { monacoEditorRef } = useContext(MainContext);
+  const editorInstance = useSelector(
+    (state: AppState) => state.main.editor.editorInstance,
+  );
 
   const handlePanelsToggle = useCallback(
     (
@@ -122,7 +124,7 @@ export const useCmdk = () => {
           const contentEditableUid = contentEditableUidRef.current;
           contentEditableUidRef.current = "";
 
-          const codeViewInstance = monacoEditorRef.current;
+          const codeViewInstance = editorInstance;
           const codeViewInstanceModel = codeViewInstance?.getModel();
           if (!codeViewInstance || !codeViewInstanceModel) {
             LogAllow &&

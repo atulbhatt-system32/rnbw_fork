@@ -2,13 +2,12 @@ import useRnbw from "@_services/useRnbw";
 import { Range } from "monaco-editor";
 
 import { PrettyCode, useElementHelper } from "@_services/useElementsHelper";
-import { useContext } from "react";
-import { MainContext } from "@src/_redux/main";
 import { notify } from "@src/services/notificationService";
+import { AppState } from "@src/_redux/store";
+import { useSelector } from "react-redux";
 
 export default function useTurnInto() {
   const rnbw = useRnbw();
-  const { monacoEditorRef } = useContext(MainContext);
   const {
     isPastingAllowed,
     sortUidsDsc,
@@ -18,10 +17,12 @@ export default function useTurnInto() {
   } = useElementHelper();
 
   const selectedElements = rnbw.elements.getSelectedElements();
-
+  const editorInstance = useSelector(
+    (state: AppState) => state.main.editor.editorInstance,
+  );
   async function turnInto(tagName: string) {
     const sortedUids = sortUidsDsc(selectedElements);
-    const codeViewInstanceModel = monacoEditorRef.current?.getModel();
+    const codeViewInstanceModel = editorInstance?.getModel();
     if (!codeViewInstanceModel) return;
 
     // Checking if a parent component can have a tag as a child

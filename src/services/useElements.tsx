@@ -2,7 +2,7 @@ import { LogAllow, RootNodeUid } from "@src/constants";
 import { StageNodeIdAttr } from "@src/constants";
 
 import { getObjKeys } from "@src/helper";
-import { MainContext } from "@_redux/main";
+
 import {
   NodeTree_Event_RedoActionType,
   NodeTree_Event_UndoActionType,
@@ -26,14 +26,15 @@ import {
 } from "@_types/elements.types";
 
 import { Range } from "monaco-editor";
-import { useCallback, useContext, useMemo } from "react";
-import { useDispatch } from "react-redux";
+import { useCallback, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { PrettyCode, isValidNode, useElementHelper } from "./useElementsHelper";
 import * as parse5 from "parse5";
 import { setIsContentProgrammaticallyChanged } from "@_redux/main/reference";
 import { notify } from "./notificationService";
 
 import { morphCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
+import { AppState } from "@src/_redux/store";
 export default function useElements() {
   const {
     nSelectedItemsObj,
@@ -47,7 +48,9 @@ export default function useElements() {
     nodeEventFutureLength,
     copiedNodeDisplayName,
   } = useAppState();
-  const { monacoEditorRef } = useContext(MainContext);
+  const editorInstance = useSelector(
+    (state: AppState) => state.main.editor.editorInstance,
+  );
   const dispatch = useDispatch();
   const {
     setEditorModelValue,
@@ -60,7 +63,7 @@ export default function useElements() {
     isPastingAllowed,
   } = useElementHelper();
 
-  const codeViewInstanceModel = monacoEditorRef.current?.getModel();
+  const codeViewInstanceModel = editorInstance?.getModel();
   const selectedItems = useMemo(
     () => getObjKeys(nSelectedItemsObj),
     [nSelectedItemsObj],
@@ -742,7 +745,7 @@ export default function useElements() {
       const helperModel = getEditorModelWithCurrentCode();
       const iframeRef = eventListenerRef.current.iframeRefRef.current;
       const nodeTree = eventListenerRef.current.nodeTreeRef.current;
-      const codeViewInstanceModel = monacoEditorRef.current?.getModel();
+      const codeViewInstanceModel = editorInstance?.getModel();
       if (!codeViewInstanceModel || !iframeRef) return;
 
       const contentEditableElement =

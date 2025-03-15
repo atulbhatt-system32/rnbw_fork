@@ -6,11 +6,13 @@ enableMapSet();
 
 interface EditorState {
   editorInstance: monaco.editor.IStandaloneCodeEditor | null;
+  editorModels: Record<string, monaco.editor.ITextModel>;
   isEditorReady: boolean;
 }
 
 const initialState: EditorState = {
   editorInstance: null,
+  editorModels: {},
   isEditorReady: false,
 };
 
@@ -25,8 +27,14 @@ const editorSlice = createSlice({
       state.editorInstance = action.payload;
       state.isEditorReady = true;
     },
+    setEditorModels(
+      state,
+      action: PayloadAction<Record<string, monaco.editor.ITextModel>>,
+    ) {
+      state.editorModels = action.payload;
+    },
   },
 });
 
-export const { setEditorInstance } = editorSlice.actions;
+export const { setEditorInstance, setEditorModels } = editorSlice.actions;
 export default editorSlice.reducer;

@@ -1,10 +1,9 @@
-import { useCallback, useContext, useRef } from "react";
-import { useDispatch } from "react-redux";
+import { useCallback, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { LogAllow, ShortDelay } from "@src/constants";
 import { getValidNodeUids } from "@_api/helpers";
 import { THtmlNodeData } from "@_api/node";
-import { MainContext } from "@_redux/main";
 import { setHoveredNodeUid } from "@_redux/main/nodeTree";
 import { setSelectedNodeUids } from "@_redux/main/nodeTree/event";
 import { setActivePanel } from "@_redux/main/processor";
@@ -30,10 +29,13 @@ import { TNodeUid } from "@_api/index";
 import { useNavigate } from "react-router-dom";
 import useRnbw from "@_services/useRnbw";
 import { StageNodeIdAttr } from "@src/constants";
+import { AppState } from "@src/_redux/store";
 export const useMouseEvents = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { monacoEditorRef } = useContext(MainContext);
+  const editorInstance = useSelector(
+    (state: AppState) => state.main.editor.editorInstance,
+  );
   const rnbw = useRnbw();
 
   const mostRecentClickedNodeUidRef = useRef<TNodeUid>(""); //This is used because dbl clikc event was not able to receive the uid of the node that was clicked
@@ -156,7 +158,7 @@ export const useMouseEvents = () => {
         const contentEditableUid = contentEditableUidRef.current;
         contentEditableUidRef.current = "";
 
-        const codeViewInstance = monacoEditorRef.current;
+        const codeViewInstance = editorInstance;
         const codeViewInstanceModel = codeViewInstance?.getModel();
         if (!codeViewInstance || !codeViewInstanceModel) {
           LogAllow &&
@@ -172,7 +174,7 @@ export const useMouseEvents = () => {
         });
       }
     },
-    [monacoEditorRef],
+    [editorInstance],
   );
 
   const debouncedSelectAllText = useCallback(

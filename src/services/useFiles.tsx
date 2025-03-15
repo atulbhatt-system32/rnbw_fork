@@ -33,8 +33,7 @@ import {
   removeSingleLocalDirectoryOrFile,
 } from "@_api/index";
 
-import { useCallback, useContext } from "react";
-import { MainContext } from "@_redux/main";
+import { useCallback } from "react";
 import { getObjKeys } from "@src/helper";
 import { useFileHelpers } from "./useFileHelpers";
 import { useHandlers } from "@src/hooks";
@@ -47,6 +46,7 @@ import {
   setLastFileAction,
 } from "@_redux/main/fileTree";
 import { notify } from "./notificationService";
+
 export default function useFiles() {
   const dispatch = useDispatch();
   const {
@@ -71,7 +71,6 @@ export default function useFiles() {
     moveLocalSingleDirectoryOrFile,
   } = useFileHelpers();
 
-  const { monacoEditorRef } = useContext(MainContext);
   const { reloadCurrentProject } = useHandlers();
 
   //Create
@@ -247,9 +246,7 @@ export default function useFiles() {
   const getSelectedFiles = () => {
     return fSelectedItemsObj;
   };
-  const getEditorRef = () => {
-    return monacoEditorRef;
-  };
+
   const copyFiles = (params: IcopyFiles = {}) => {
     const { uids } = params;
     const selectedItems = getObjKeys(fSelectedItemsObj);
@@ -536,7 +533,6 @@ export default function useFiles() {
     getRootTree,
     getFolderTree,
     getCurrentFile,
-    getEditorRef,
     copyFiles,
     cutFiles,
     getSelectedFiles,

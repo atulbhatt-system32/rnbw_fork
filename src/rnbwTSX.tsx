@@ -34,8 +34,7 @@ function MainPage() {
   const { currentFileUid, fileTree, autoSave, cmdkReferenceData } =
     useAppState();
 
-  const { monacoEditorRef, setMonacoEditorRef, iframeRefRef, setIframeRefRef } =
-    useReferneces();
+  const { iframeRefRef, setIframeRefRef } = useReferneces();
 
   const { importProject, closeNavigator, reloadCurrentProject } = useHandlers();
   const { onNew, onUndo, onRedo, onClear, onJumpstart } = useCmdk({
@@ -168,8 +167,6 @@ function MainPage() {
         value={{
           maxNodeUidRef,
           setMaxNodeUidRef,
-          monacoEditorRef,
-          setMonacoEditorRef,
           contentEditableUidRef,
           setContentEditableUidRef,
           iframeRefRef,
