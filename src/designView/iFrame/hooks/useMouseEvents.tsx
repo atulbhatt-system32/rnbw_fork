@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import { LogAllow, ShortDelay } from "@src/constants";
 import { getValidNodeUids } from "@_api/helpers";
@@ -29,13 +29,11 @@ import { TNodeUid } from "@_api/index";
 import { useNavigate } from "react-router-dom";
 import useRnbw from "@_services/useRnbw";
 import { StageNodeIdAttr } from "@src/constants";
-import { AppState } from "@src/_redux/store";
+import { useMonacoEditor } from "@src/context/editor.context";
 export const useMouseEvents = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const editorInstance = useSelector(
-    (state: AppState) => state.main.editor.editorInstance,
-  );
+  const { editorInstance } = useMonacoEditor();
   const rnbw = useRnbw();
 
   const mostRecentClickedNodeUidRef = useRef<TNodeUid>(""); //This is used because dbl clikc event was not able to receive the uid of the node that was clicked

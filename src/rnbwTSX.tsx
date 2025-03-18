@@ -3,13 +3,13 @@ import "@rnbws/renecss/dist/rene.min.css";
 import "@rnbws/svg-icon.js";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import * as ReactDOMClient from "react-dom/client";
-import { Provider, useDispatch, useSelector } from "react-redux";
+import { Provider, useDispatch } from "react-redux";
 import { HashRouter as Router, Route, Routes } from "react-router-dom";
 import { Workbox } from "workbox-window";
 import persistStore from "redux-persist/es/persistStore";
 import { PersistGate } from "redux-persist/integration/react";
 
-import { AppState, store } from "@src/_redux/store";
+import { store } from "@src/_redux/store";
 import { Loader } from "@src/components";
 import { ActionsPanel, CodeView, DesignView } from "./rnbw";
 import { isUnsavedProject } from "@_api/file";
@@ -28,7 +28,8 @@ import { initRnbwServices } from "./services/rnbw.services";
 import { CodeViewSyncDelay, LogAllow } from "./constants";
 import globalService from "./services/global.service";
 import projectService from "./services/project.service";
-
+import { MonacoEditorProvider } from "./context/editor.context";
+import { useMonacoEditor } from "./context/editor.context";
 // Constants
 
 function MainPage() {
@@ -208,9 +209,7 @@ function MainPage() {
 
 function App() {
   const [nohostReady, setNohostReady] = useState(false);
-  const isEditorReady = useSelector(
-    (state: AppState) => state.main.editor.isEditorReady,
-  );
+  const { isEditorReady } = useMonacoEditor();
   useEffect(() => {
     // Initialize extension bridge
     initRnbwServices();
@@ -254,7 +253,9 @@ const root = ReactDOMClient.createRoot(
 root.render(
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
-      <App />
+      <MonacoEditorProvider>
+        <App />
+      </MonacoEditorProvider>
     </PersistGate>
   </Provider>,
 );

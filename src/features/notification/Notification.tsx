@@ -6,13 +6,12 @@ import {
   InfoNotificationData,
   NotificationEvent,
 } from "@src/types/notification.types";
-import { useSelector, useDispatch } from "react-redux";
-import { AppState } from "@src/_redux/store";
+import { useDispatch } from "react-redux";
 import {
   addParserError,
   removeParserError,
 } from "@src/_redux/main/nodeTree/slice";
-
+import { useMonacoEditor } from "@src/context/editor.context";
 interface NotificationProps extends NotificationEvent {
   id: string;
   removeNotification: (id: string) => void;
@@ -25,9 +24,7 @@ export const Notification: React.FC<NotificationProps> = ({
   removeNotification,
 }) => {
   const dispatch = useDispatch();
-  const { editorInstance } = useSelector(
-    (state: AppState) => state.main.editor,
-  );
+  const { editorInstance } = useMonacoEditor();
 
   const getToastIcon = () => {
     if (type === "info") {

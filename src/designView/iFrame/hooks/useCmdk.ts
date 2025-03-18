@@ -1,9 +1,8 @@
 import { useCallback } from "react";
 
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import { LogAllow } from "@src/constants";
-import { AppState } from "@src/_redux/store";
 import { setCurrentCommand } from "@_redux/main/cmdk";
 import { getCommandKey } from "../../../rnbw";
 import { TCmdkKeyMap } from "@src/types";
@@ -13,13 +12,11 @@ import { getBodyChild, getValidElementWithUid } from "../helpers";
 import { eventListenersStatesRefType } from "../IFrame";
 import { setHoveredNodeUid } from "@_redux/main/nodeTree";
 import useRnbw from "@_services/useRnbw";
-
+import { useMonacoEditor } from "@src/context/editor.context";
 export const useCmdk = () => {
   const dispatch = useDispatch();
   const rnbw = useRnbw();
-  const editorInstance = useSelector(
-    (state: AppState) => state.main.editor.editorInstance,
-  );
+  const { editorInstance } = useMonacoEditor();
 
   const handlePanelsToggle = useCallback(
     (

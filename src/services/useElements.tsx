@@ -27,14 +27,15 @@ import {
 
 import { Range } from "monaco-editor";
 import { useCallback, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { PrettyCode, isValidNode, useElementHelper } from "./useElementsHelper";
 import * as parse5 from "parse5";
 import { setIsContentProgrammaticallyChanged } from "@_redux/main/reference";
 import { notify } from "./notificationService";
 
 import { morphCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
-import { AppState } from "@src/_redux/store";
+
+import { useMonacoEditor } from "@src/context/editor.context";
 export default function useElements() {
   const {
     nSelectedItemsObj,
@@ -48,9 +49,7 @@ export default function useElements() {
     nodeEventFutureLength,
     copiedNodeDisplayName,
   } = useAppState();
-  const editorInstance = useSelector(
-    (state: AppState) => state.main.editor.editorInstance,
-  );
+  const { editorInstance } = useMonacoEditor();
   const dispatch = useDispatch();
   const {
     setEditorModelValue,

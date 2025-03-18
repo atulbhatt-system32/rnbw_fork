@@ -1,8 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { editor, Selection } from "monaco-editor";
-import { useDispatch, useSelector } from "react-redux";
-
+import { useDispatch } from "react-redux";
 import { CodeViewSyncDelay_Long, DefaultTabSize } from "@src/constants";
 import { MainContext } from "@_redux/main";
 import { setCodeViewTabSize } from "@_redux/main/codeView";
@@ -18,10 +17,11 @@ import { useSaveCommand } from "@src/processor/hooks";
 import { setIsCodeTyping } from "@_redux/main/reference";
 import { debounce } from "@src/helper";
 import { setFileTreeNodes } from "@_redux/main/fileTree";
-import { setEditorInstance } from "@src/_redux/main/editorSlice";
-import { AppState } from "@src/_redux/store";
+
+import { useMonacoEditor } from "@src/context/editor.context";
 
 const useEditor = () => {
+  const { editorInstance, setEditorInstance } = useMonacoEditor();
   const dispatch = useDispatch();
   const {
     theme: _theme,
@@ -86,59 +86,6 @@ const useEditor = () => {
   );
   const codeSelectionRef = useRef<TCodeSelection | null>(null);
   const isCodeEditingView = useRef(false);
-  const editorInstance = useSelector(
-    (state: AppState) => state.main.editor.editorInstance,
-  );
-
-  const setCodeSelection = useCallback(() => {
-    const _selection = editorInstance?.getSelection();
-    _setCodeSelection(_selection ? _selection : null);
-  }, [editorInstance]);
-
-  // handlerEditorDidMount
-  const handleEditorDidMount = useCallback(
-    (editor: editor.IStandaloneCodeEditor) => {
-      // setMonacoEditorRef(editor);
-      dispatch(setEditorInstance(editor));
-      // override monaco-editor undo/redo
-      // editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyZ, () => {
-      //   setUndoRedoToggle((prev) => ({
-      //     action: "undo",
-      //     toggle: !prev.toggle,
-      //   }));
-      // });
-      // editor.addCommand(KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyZ, () => {
-      //   setUndoRedoToggle((prev) => ({
-      //     action: "redo",
-      //     toggle: !prev.toggle,
-      //   }));
-      // });
-      // editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyY, () => {
-      //   setUndoRedoToggle((prev) => ({
-      //     action: "redo",
-      //     toggle: !prev.toggle,
-      //   }));
-      // });
-
-      // editor.onDidChangeCursorPosition((event) => {
-      //   const selection = editor.getSelection();
-      //   if (event.source === "mouse") {
-      //     if (selection && selection.isEmpty()) {
-      //       // setCodeSelection();
-      //       _setCodeSelection(selection);
-      //     }
-      //   } else if (event.source === "keyboard") {
-      //     // setCodeSelection();
-      //     if (selection && selection.isEmpty()) {
-      //       _setCodeSelection(selection);
-      //     } else {
-      //       _setCodeSelection(null);
-      //     }
-      //   }
-      // });
-    },
-    [setCodeSelection],
-  );
 
   const { debouncedAutoSave } = useSaveCommand();
 
@@ -205,6 +152,53 @@ const useEditor = () => {
       }
     },
     [longDebouncedOnChange, onChange],
+  );
+
+  // handlerEditorDidMount
+  const handleEditorDidMount = useCallback(
+    (editor: editor.IStandaloneCodeEditor) => {
+      console.log("Editor mounted:", editor);
+      setEditorInstance(editor);
+
+      // Set up model change listener
+      editor.onDidChangeModelContent((event) => {
+        console.log("Model content changed:", event);
+        const model = editor.getModel();
+        if (model) {
+          const value = model.getValue();
+          // Only trigger onChange if the change was made by the user (not programmatically)
+          if (!AppstateRef.current.isContentProgrammaticallyChanged) {
+            const selectedRange: Selection | null =
+              editor.getSelection() || null;
+
+            // Update code selection state
+            _setCodeSelection(selectedRange);
+
+            dispatch(
+              setNeedToSelectCode(
+                selectedRange
+                  ? {
+                      startLineNumber: selectedRange.startLineNumber,
+                      startColumn: selectedRange.startColumn,
+                      endLineNumber: selectedRange.endLineNumber,
+                      endColumn: selectedRange.endColumn,
+                    }
+                  : null,
+              ),
+            );
+            !AppstateRef.current.isCodeTyping &&
+              dispatch(setIsCodeTyping(true));
+            longDebouncedOnChange(value, AppstateRef.current.currentFileUid);
+          }
+        }
+      });
+
+      // Set up selection change listener
+      editor.onDidChangeCursorSelection((e) => {
+        _setCodeSelection(e.selection);
+      });
+    },
+    [dispatch, longDebouncedOnChange],
   );
 
   // undo/redo

@@ -3,8 +3,8 @@ import { Range } from "monaco-editor";
 
 import { PrettyCode, useElementHelper } from "@_services/useElementsHelper";
 import { notify } from "@src/services/notificationService";
-import { AppState } from "@src/_redux/store";
-import { useSelector } from "react-redux";
+
+import { useMonacoEditor } from "@src/context/editor.context";
 
 export default function useTurnInto() {
   const rnbw = useRnbw();
@@ -17,9 +17,7 @@ export default function useTurnInto() {
   } = useElementHelper();
 
   const selectedElements = rnbw.elements.getSelectedElements();
-  const editorInstance = useSelector(
-    (state: AppState) => state.main.editor.editorInstance,
-  );
+  const { editorInstance } = useMonacoEditor();
   async function turnInto(tagName: string) {
     const sortedUids = sortUidsDsc(selectedElements);
     const codeViewInstanceModel = editorInstance?.getModel();

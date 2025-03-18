@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from "react";
 
 import * as monaco from "monaco-editor";
 import { loader } from "@monaco-editor/react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 // import { RootNodeUid } from "@src/constants";
 import {
@@ -23,10 +23,9 @@ import { useEditor } from "./hooks";
 // import { getFileExtension } from "../sidebarView/navigatorPanel/helpers";
 import { AppState } from "@src/_redux/store";
 // import { setShowCodePanel } from "@src/_redux/global";
-import { setEditorModels } from "@src/_redux/main/editorSlice";
+import { useMonacoEditor } from "@src/context/editor.context";
 loader.config({ monaco });
 export default function RnbwEditor() {
-  const dispatch = useDispatch();
   const {
     fileTree,
     currentFileUid,
@@ -48,11 +47,8 @@ export default function RnbwEditor() {
   const currentFileContent = useSelector(
     (state: AppState) => state.main.currentPage.content,
   );
-
-  const { editorInstance, editorModels } = useSelector(
-    (state: AppState) => state.main.editor,
-  );
-
+  const { editorInstance, setEditorInstance, editorModels, setEditorModels } =
+    useMonacoEditor();
   // const { showCodePanel } = useSelector(
   //   (state: AppState) => state.global.panelsState,
   // );
@@ -83,15 +79,33 @@ export default function RnbwEditor() {
     const modelId = extension; // Use file UID as model ID
 
     if (!editorModels[modelId]) {
+      // Create a new model if it doesn't exist
       const newModel = monaco.editor.createModel(currentFileContent, extension);
-      dispatch(setEditorModels({ ...editorModels, [modelId]: newModel }));
-    } else {
-      const existingModel = editorModels[modelId];
-      existingModel.setValue(currentFileContent); // Update existing model content
-    }
+      setEditorModels({ ...editorModels, [modelId]: newModel });
 
-    editorInstance?.setModel(editorModels[modelId]); // Set the current model to the editor
-  }, [fileTree, currentFileUid, currentFileContent]);
+      // Set the model to the editor
+      editorInstance?.setModel(newModel);
+    } else {
+      // Use existing model
+      const existingModel = editorModels[modelId];
+
+      // Only update content if it's different
+      if (existingModel.getValue() !== currentFileContent) {
+        existingModel.setValue(currentFileContent);
+      }
+
+      // Set the model to the editor
+      editorInstance?.setModel(existingModel);
+    }
+  }, [
+    fileTree,
+    currentFileUid,
+    currentFileContent,
+    editorModels,
+    editorInstance,
+    setEditorInstance,
+    setEditorModels,
+  ]);
 
   // scroll to top on file change
   // useEffect(() => {
@@ -306,6 +320,11 @@ export default function RnbwEditor() {
     console.log("currentFileContent", currentFileContent);
   }, [currentFileContent]);
 
+  useEffect(() => {
+    console.log("editorInstance", editorInstance);
+    console.log("editorModels", editorModels);
+  }, [editorInstance, editorModels]);
+
   return useMemo(() => {
     return (
       <Editor
@@ -313,8 +332,7 @@ export default function RnbwEditor() {
         theme={theme}
         language={language}
         path={language}
-        // value={currentFileContent}
-        // onChange={(value) => handleOnChange(value, currentFileUid)}
+        onChange={(value) => handleOnChange(value, currentFileUid)}
         options={{
           ...editorConfigs,
           wordWrap: wordWrap ? "on" : ("off" as "on" | "off"),
@@ -324,11 +342,11 @@ export default function RnbwEditor() {
   }, [
     handleEditorDidMount,
     handleOnChange,
-
     theme,
     language,
-    currentFileContent,
     editorConfigs,
     codeErrors,
+    currentFileUid,
+    wordWrap,
   ]);
 }

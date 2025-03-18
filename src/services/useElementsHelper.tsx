@@ -22,7 +22,7 @@ import {
   TNodeUid,
   TValidNodeUid,
 } from "@_api/index";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   focusNodeTreeNode,
   selectNodeTreeNodes,
@@ -33,7 +33,7 @@ import {
 import { TCmdkGroupData } from "@_types/main.types";
 import { notify } from "./notificationService";
 import { DataSequencedUid, StageNodeIdAttr } from "@src/constants";
-import { AppState } from "@src/_redux/store";
+import { useMonacoEditor } from "@src/context/editor.context";
 
 export async function PrettyCode({
   code,
@@ -101,9 +101,7 @@ export const useElementHelper = () => {
     didUndo,
     htmlReferenceData,
   } = useAppState();
-  const editorInstance = useSelector(
-    (state: AppState) => state.main.editor.editorInstance,
-  );
+  const { editorInstance } = useMonacoEditor();
   const dispatch = useDispatch();
   const selectedItems = useMemo(
     () => getObjKeys(nSelectedItemsObj),
@@ -114,7 +112,7 @@ export const useElementHelper = () => {
   without affecting the actual codeViewInstanceModel and then apply the changes 
   to the codeViewInstanceModel all at once.*/
     const codeViewInstanceModel = editorInstance?.getModel();
-    const helperModel = editor.createModel("", "html");
+    const helperModel = editor?.createModel("", "html");
     codeViewInstanceModel &&
       setEditorModelValue(codeViewInstanceModel, helperModel);
     return helperModel;

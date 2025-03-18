@@ -52,7 +52,10 @@ import { useElementHelper } from "@_services/useElementsHelper";
 import { notify } from "@src/services/notificationService";
 
 // import Idiomorph from "idiomorph";
-import { setCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
+import {
+  setCurrentPage,
+  setCurrentPageContent,
+} from "@src/_redux/main/currentPage/currentPage.slice";
 import htmlService from "@src/services/html.service";
 import { setCurrentPageNewNodeTreeThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
 import { serialize } from "parse5";
@@ -122,6 +125,8 @@ export const useNodeTreeEvent = () => {
       if (!currentFileContent) {
         dispatch(removeRunningAction());
         return;
+      } else {
+        dispatch(setCurrentPageContent(currentFileContent));
       }
 
       if (ext === "html") {
@@ -189,6 +194,7 @@ export const useNodeTreeEvent = () => {
         if (fileData.ext === "html") {
           dispatch(
             setCurrentPage({
+              content: currentFileContent,
               uid: currentFileUid,
               designViewState: {
                 previewPath: fileData.path,

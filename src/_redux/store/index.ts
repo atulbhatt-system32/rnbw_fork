@@ -7,7 +7,7 @@ function configureAppStore(initialState = {}) {
     preloadedState: initialState,
     devTools: process.env.NODE_ENV !== "production",
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ serializableCheck: false }),
+      getDefaultMiddleware({ serializableCheck: true }),
   });
 
   return store;
