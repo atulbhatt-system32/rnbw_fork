@@ -399,33 +399,6 @@ export default function RnbwEditor() {
   //   editorModel.deltaDecorations(oldDecorations, newDecorations);
   // }, [nodeUidPositions]);
 
-  useEffect(() => {
-    console.log("currentFileContent changed:", {
-      fileUid: currentFileUid,
-      contentLength: currentFileContent?.length || 0,
-      hasEditor: !!editorInstance,
-      hasModel: !!editorInstance?.getModel(),
-    });
-  }, [currentFileContent, currentFileUid, editorInstance]);
-
-  useEffect(() => {
-    console.log("editorInstance changed:", {
-      hasInstance: !!editorInstance,
-      modelCount: Object.keys(editorModels).length,
-      currentModelUri: editorInstance?.getModel()?.uri.toString(),
-    });
-  }, [editorInstance, editorModels]);
-
-  // console logs that were already present
-  useEffect(() => {
-    console.log("currentFileContent", currentFileContent);
-  }, [currentFileContent]);
-
-  useEffect(() => {
-    console.log("editorInstance", editorInstance);
-    console.log("editorModels", editorModels);
-  }, [editorInstance, editorModels]);
-
   // Recovery mechanism if content is missing
   useEffect(() => {
     // Wait a short time after the component renders to check if content is missing
