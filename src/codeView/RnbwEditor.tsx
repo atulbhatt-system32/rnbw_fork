@@ -47,8 +47,7 @@ export default function RnbwEditor() {
   const currentFileContent = useSelector(
     (state: AppState) => state.main.currentPage.content,
   );
-  const { editorInstance, setEditorInstance, editorModels, setEditorModels } =
-    useMonacoEditor();
+  const { editorInstance, editorModels, setEditorModels } = useMonacoEditor();
   // const { showCodePanel } = useSelector(
   //   (state: AppState) => state.global.panelsState,
   // );
@@ -68,44 +67,128 @@ export default function RnbwEditor() {
 
   // language sync
   useEffect(() => {
+    if (!editorInstance) return;
+
     const file = fileTree[currentFileUid];
     if (!file) return;
 
     const fileData = file.data as TFileNodeData;
     const extension = fileData.ext;
     extension && updateLanguage(extension);
+  }, [fileTree, currentFileUid, editorInstance, updateLanguage]);
 
-    // Create or switch model
-    const modelId = extension; // Use file UID as model ID
+  // Model management - completely separated from content updates
+  useEffect(() => {
+    if (!editorInstance || !currentFileUid) return;
 
-    if (!editorModels[modelId]) {
-      // Create a new model if it doesn't exist
-      const newModel = monaco.editor.createModel(currentFileContent, extension);
-      setEditorModels({ ...editorModels, [modelId]: newModel });
+    const file = fileTree[currentFileUid];
+    if (!file) return;
 
-      // Set the model to the editor
-      editorInstance?.setModel(newModel);
-    } else {
-      // Use existing model
-      const existingModel = editorModels[modelId];
+    const fileData = file.data as TFileNodeData;
+    const extension = fileData.ext;
+    if (!extension) return;
 
-      // Only update content if it's different
-      if (existingModel.getValue() !== currentFileContent) {
-        existingModel.setValue(currentFileContent);
+    // We use the file UID as model ID to ensure uniqueness
+    const modelId = currentFileUid;
+
+    try {
+      console.log("Switching to model for file:", modelId);
+
+      // Save scroll position first
+      const scrollTop = editorInstance.getScrollTop();
+      const viewState = editorInstance.saveViewState();
+
+      // Check if we already have a model for this file
+      if (editorModels[modelId]) {
+        console.log("Using existing model for:", modelId);
+        // Use existing model - don't update content here
+        editorInstance.setModel(editorModels[modelId]);
+      } else {
+        console.log("Creating new model for:", modelId);
+        // Create a new model with initial content
+        const newModel = monaco.editor.createModel(
+          currentFileContent || "",
+          extension,
+        );
+        // Store the model in our context
+        setEditorModels((prev) => ({ ...prev, [modelId]: newModel }));
+        // Set the model to the editor
+        editorInstance.setModel(newModel);
       }
 
-      // Set the model to the editor
-      editorInstance?.setModel(existingModel);
+      // Restore view state if available
+      if (viewState) {
+        editorInstance.restoreViewState(viewState);
+        editorInstance.setScrollTop(scrollTop);
+      }
+    } catch (error) {
+      console.error("Error switching models:", error);
     }
   }, [
-    fileTree,
     currentFileUid,
-    currentFileContent,
-    editorModels,
+    fileTree,
     editorInstance,
-    setEditorInstance,
+    editorModels,
     setEditorModels,
+    currentFileContent,
   ]);
+
+  // Extra protection: ensure model has content on initial load
+  useEffect(() => {
+    if (!editorInstance || !currentFileContent) return;
+
+    const currentModel = editorInstance.getModel();
+    if (!currentModel) return;
+
+    // If the model is empty but we have content, set it immediately
+    if (currentModel.getValue() === "" && currentFileContent) {
+      console.log("Setting initial content on empty model");
+      currentModel.setValue(currentFileContent);
+    }
+  }, [editorInstance, currentFileContent]);
+
+  // Content management - only updates content, never switches models
+  useEffect(() => {
+    if (!editorInstance || !currentFileUid) return;
+
+    const currentModel = editorInstance.getModel();
+    if (!currentModel) {
+      console.warn("No active model to update content");
+      return;
+    }
+
+    const currentValue = currentModel.getValue();
+
+    // Only update content if it's different to avoid recursive updates
+    if (
+      currentValue !== currentFileContent &&
+      currentFileContent !== undefined
+    ) {
+      console.log("Updating model content for:", currentFileUid);
+
+      // Save cursor and scroll position
+      const selections = editorInstance.getSelections();
+      const scrollPosition = editorInstance.getScrollTop();
+
+      // Set content without triggering the onChange event
+      currentModel.pushEditOperations(
+        [],
+        [
+          {
+            range: currentModel.getFullModelRange(),
+            text: currentFileContent,
+          },
+        ],
+        () => null,
+      );
+
+      // Restore cursor and scroll position
+      if (selections) {
+        editorInstance.setSelections(selections);
+      }
+      editorInstance.setScrollTop(scrollPosition);
+    }
+  }, [currentFileContent, currentFileUid, editorInstance]);
 
   // scroll to top on file change
   // useEffect(() => {
@@ -317,6 +400,24 @@ export default function RnbwEditor() {
   // }, [nodeUidPositions]);
 
   useEffect(() => {
+    console.log("currentFileContent changed:", {
+      fileUid: currentFileUid,
+      contentLength: currentFileContent?.length || 0,
+      hasEditor: !!editorInstance,
+      hasModel: !!editorInstance?.getModel(),
+    });
+  }, [currentFileContent, currentFileUid, editorInstance]);
+
+  useEffect(() => {
+    console.log("editorInstance changed:", {
+      hasInstance: !!editorInstance,
+      modelCount: Object.keys(editorModels).length,
+      currentModelUri: editorInstance?.getModel()?.uri.toString(),
+    });
+  }, [editorInstance, editorModels]);
+
+  // console logs that were already present
+  useEffect(() => {
     console.log("currentFileContent", currentFileContent);
   }, [currentFileContent]);
 
@@ -324,6 +425,29 @@ export default function RnbwEditor() {
     console.log("editorInstance", editorInstance);
     console.log("editorModels", editorModels);
   }, [editorInstance, editorModels]);
+
+  // Recovery mechanism if content is missing
+  useEffect(() => {
+    // Wait a short time after the component renders to check if content is missing
+    const timer = setTimeout(() => {
+      if (!editorInstance) return;
+
+      const currentModel = editorInstance.getModel();
+      if (!currentModel) return;
+
+      const modelContent = currentModel.getValue();
+
+      // If the model is empty but Redux has content, force an update
+      if (!modelContent && currentFileContent) {
+        console.warn(
+          "Recovery: Detected empty editor with available content. Forcing update.",
+        );
+        currentModel.setValue(currentFileContent);
+      }
+    }, 100); // Short delay to let normal rendering complete
+
+    return () => clearTimeout(timer);
+  }, [editorInstance, currentFileContent, currentFileUid]);
 
   return useMemo(() => {
     return (

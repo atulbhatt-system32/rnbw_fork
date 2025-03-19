@@ -124,6 +124,7 @@ const currentPageSlice = createSlice({
 export const {
   setCurrentPage,
   resetCurrentPage,
+  setCurrentPageContent,
   setCurrentPagePreviewUrl,
   setCurrentPagePreviewContent,
   morphCurrentPage,
