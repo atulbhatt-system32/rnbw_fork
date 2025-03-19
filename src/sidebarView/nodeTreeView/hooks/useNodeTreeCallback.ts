@@ -4,7 +4,6 @@ import { getValidNodeUids } from "@_api/helpers";
 import { TNodeUid } from "@_api/types";
 import { useAppState } from "@_redux/useAppState";
 
-import { useNodeViewState } from "./useNodeViewState";
 import useRnbw from "@_services/useRnbw";
 
 import { useDispatch } from "react-redux";
@@ -20,13 +19,11 @@ export const useNodeTreeCallback = (
   const rnbw = useRnbw();
   const dispatch = useDispatch();
 
-  const { cb_focusNode } = useNodeViewState();
-
   const onSelectItems = (items: TreeItemIndex[]) => {
     dispatch(setSelectedNodeUidsThunk(items as TNodeUid[]));
   };
   const onFocusItem = () => {
-    cb_focusNode();
+    // cb_focusNode();
   };
   const onExpandItem = (item: TreeItem) => {
     dispatch(addExpandedNodeUidThunk(item.index as TNodeUid));

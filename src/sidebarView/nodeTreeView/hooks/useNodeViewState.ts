@@ -22,11 +22,6 @@ export function useNodeViewState() {
     nSelectedItemsObj: selectedItemsObj,
   } = useAppState();
 
-  const cb_focusNode = useCallback(() => {
-    dispatch(addRunningAction());
-    dispatch(removeRunningAction());
-  }, []);
-
   const cb_selectNode = useCallback(
     (uids: TNodeUid[]) => {
       dispatch(addRunningAction());
@@ -67,5 +62,5 @@ export function useNodeViewState() {
     dispatch(removeRunningAction());
   }, []);
 
-  return { cb_focusNode, cb_selectNode, cb_expandNode, cb_collapseNode };
+  return { cb_selectNode, cb_expandNode, cb_collapseNode };
 }

@@ -152,8 +152,6 @@ const NodeTreeView = () => {
   //   return data;
   // }, [validNodeTree, nExpandedItemsObj]);
 
-  // node view state handlers
-  // const { cb_expandNode } = useNodeViewState();
   const [nextToExpand, setNextToExpand] = useState<TNodeUid | null>(null);
 
   const onPanelClick = useCallback(() => {
