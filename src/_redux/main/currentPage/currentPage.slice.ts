@@ -2,9 +2,10 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { THtmlNodeTreeData, TNodeTreeData } from "@src/api";
 import { TreeStructure } from "@src/types/html.types";
 
-interface CurrentPageState {
+export interface CurrentPageState {
   uid: string;
   content: string;
+  extension: string;
   nodeTree: TNodeTreeData;
   newNodeTree: TreeStructure;
   updateType: "load" | "type" | "morph";
@@ -30,6 +31,7 @@ interface ContentUpdatePayload {
 const initialState: CurrentPageState = {
   uid: "",
   content: "",
+  extension: "",
   nodeTree: {},
   designViewState: {
     previewPath: "",
@@ -73,6 +75,9 @@ const currentPageSlice = createSlice({
     },
     setCurrentPageUid(state, action: PayloadAction<string>) {
       state.uid = action.payload;
+    },
+    setCurrentPageExtension(state, action: PayloadAction<string>) {
+      state.extension = action.payload;
     },
     morphCurrentPage(state, action: PayloadAction<ContentUpdatePayload>) {
       return {
@@ -136,5 +141,6 @@ export const {
   setExpandedNodeUids,
   addExpandedNodeUid,
   removeExpandedNodeUid,
+  setCurrentPageExtension,
 } = currentPageSlice.actions;
 export default currentPageSlice.reducer;
