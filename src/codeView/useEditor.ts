@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { editor, Selection } from "monaco-editor";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { CodeViewSyncDelay_Long, DefaultTabSize } from "@src/constants";
 import { MainContext } from "@_redux/main";
 import { setCodeViewTabSize } from "@_redux/main/codeView";
@@ -11,17 +11,29 @@ import {
 } from "@_redux/main/nodeTree";
 import { useAppState } from "@_redux/useAppState";
 
-import { getCodeViewTheme, getLanguageFromExtension } from "../helpers";
-import { TCodeSelection } from "../types";
+import { getCodeViewTheme, getLanguageFromExtension } from "./helpers";
+import { TCodeSelection } from "./types";
 import { useSaveCommand } from "@src/processor/hooks";
 import { setIsCodeTyping } from "@_redux/main/reference";
 import { debounce } from "@src/helper";
 import { setFileTreeNodes } from "@_redux/main/fileTree";
 
 import { useMonacoEditor } from "@src/context/editor.context";
+import {
+  ensureInitialContent,
+  getFileLanguage,
+  recoverMissingContent,
+  updateModelContent,
+} from "@src/services/editor.service";
+import { AppState } from "@src/_redux/store";
+import * as monaco from "monaco-editor";
 
 const useEditor = () => {
-  const { editorInstance, setEditorInstance } = useMonacoEditor();
+  const { editorInstance, setEditorInstance, editorModels, setEditorModels } =
+    useMonacoEditor();
+  const currentFileContent = useSelector(
+    (state: AppState) => state.main.currentPage.content,
+  );
   const dispatch = useDispatch();
   const {
     theme: _theme,
@@ -88,6 +100,56 @@ const useEditor = () => {
   const isCodeEditingView = useRef(false);
 
   const { debouncedAutoSave } = useSaveCommand();
+
+  const manageEditorModel = () => {
+    if (!editorInstance || !currentFileUid) return;
+
+    const languageId = getFileLanguage({
+      fileTree,
+      currentFileUid,
+    });
+    const modelId = currentFileUid;
+
+    try {
+      console.log("Switching to model for file:", modelId);
+
+      // Save scroll position first
+      const scrollTop = editorInstance.getScrollTop();
+      const viewState = editorInstance.saveViewState();
+
+      // Check if we already have a model for this file
+      if (editorModels[modelId]) {
+        console.log("Using existing model for:", modelId);
+        editorInstance.setModel(editorModels[modelId]);
+      } else {
+        console.log("Creating new model for:", modelId);
+        const newModel = monaco.editor.createModel(
+          currentFileContent || "",
+          languageId,
+        );
+        setEditorModels((prev) => ({ ...prev, [modelId]: newModel }));
+        editorInstance.setModel(newModel);
+      }
+
+      // Restore view state if available
+      if (viewState) {
+        editorInstance.restoreViewState(viewState);
+        editorInstance.setScrollTop(scrollTop);
+      }
+    } catch (error) {
+      console.error("Error switching models:", error);
+    }
+  };
+
+  const syncLanguage = useCallback(() => {
+    const language = getFileLanguage({
+      fileTree,
+      currentFileUid,
+    });
+    if (language) {
+      updateLanguage(language);
+    }
+  }, [fileTree, currentFileUid, updateLanguage]);
 
   // handleOnChange
   const onChange = useCallback(
@@ -251,6 +313,41 @@ const useEditor = () => {
     }
   }, [undoRedoToggle]);
 
+  // Call functions from useEffects
+  useEffect(() => {
+    syncLanguage();
+  }, [syncLanguage]);
+
+  useEffect(() => {
+    // Use setTimeout to let rendering complete
+    const timer = setTimeout(() => {
+      recoverMissingContent({
+        editorInstance,
+        currentFileContent,
+      });
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [recoverMissingContent, editorInstance, currentFileContent]);
+
+  useEffect(() => {
+    updateModelContent({
+      editorInstance,
+      currentFileContent,
+      currentFileUid,
+    });
+  }, [updateModelContent, editorInstance, currentFileContent, currentFileUid]);
+
+  useEffect(() => {
+    ensureInitialContent({
+      editorInstance,
+      currentFileContent,
+    });
+  }, [ensureInitialContent, editorInstance, currentFileContent]);
+
+  useEffect(() => {
+    manageEditorModel();
+  }, [manageEditorModel]);
   return {
     handleEditorDidMount,
     handleOnChange,
