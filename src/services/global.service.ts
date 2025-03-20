@@ -100,7 +100,7 @@ function isUserNewbie() {
   const newbie = localStorage.getItem("newbie");
   const isNewbie = newbie === null ? true : false;
 
-  if (!isNewbie) {
+  if (isNewbie) {
     localStorage.setItem("newbie", "false");
   }
   return isNewbie;
