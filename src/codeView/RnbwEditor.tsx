@@ -16,7 +16,6 @@ import useEditor from "@src/codeView/useEditor";
 loader.config({ monaco });
 export default function RnbwEditor() {
   const {
-    currentFileUid,
     // currentFileContent,
     // nodeUidPositions,
 
@@ -29,7 +28,6 @@ export default function RnbwEditor() {
     // editingNodeUidInCodeView,
     // isCodeTyping,
     wordWrap,
-    codeErrors,
   } = useAppState();
 
   // const { showCodePanel } = useSelector(
@@ -38,11 +36,12 @@ export default function RnbwEditor() {
 
   const {
     handleEditorDidMount,
-    handleOnChange,
+    // handleOnChange,
     // handleKeyDown,
     theme,
     language,
     editorConfigs,
+    currentFileUid,
     // codeSelection,
   } = useEditor();
 
@@ -59,7 +58,6 @@ export default function RnbwEditor() {
         theme={theme}
         language={language}
         path={language}
-        onChange={(value) => handleOnChange(value, currentFileUid)}
         options={{
           ...editorConfigs,
           wordWrap: wordWrap ? "on" : ("off" as "on" | "off"),
@@ -68,12 +66,10 @@ export default function RnbwEditor() {
     );
   }, [
     handleEditorDidMount,
-    handleOnChange,
     theme,
     language,
     editorConfigs,
-    codeErrors,
-    currentFileUid,
     wordWrap,
+    currentFileUid,
   ]);
 }

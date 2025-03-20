@@ -52,10 +52,7 @@ import { useElementHelper } from "@_services/useElementsHelper";
 import { notify } from "@src/services/notificationService";
 
 // import Idiomorph from "idiomorph";
-import {
-  setCurrentPage,
-  setCurrentPageContent,
-} from "@src/_redux/main/currentPage/currentPage.slice";
+import { setCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
 import htmlService from "@src/services/html.service";
 import { setCurrentPageNewNodeTreeThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
 import { serialize } from "parse5";
@@ -126,7 +123,12 @@ export const useNodeTreeEvent = () => {
         dispatch(removeRunningAction());
         return;
       } else {
-        dispatch(setCurrentPageContent(currentFileContent));
+        dispatch(
+          setCurrentPage({
+            content: currentFileContent,
+            extension: ext,
+          }),
+        );
       }
 
       if (ext === "html") {
@@ -195,6 +197,7 @@ export const useNodeTreeEvent = () => {
           dispatch(
             setCurrentPage({
               content: currentFileContent,
+              extension: fileData.ext,
               uid: currentFileUid,
               designViewState: {
                 previewPath: fileData.path,
@@ -409,7 +412,8 @@ export const useNodeTreeEvent = () => {
 
       dispatch(removeRunningAction());
     }
-    updateFileContent();
+    // updateFileContent();
+    console.log(updateFileContent);
   }, [currentFileContent, currentFileUid]);
 
   // expand nodes that need to be expanded when it's just select-event

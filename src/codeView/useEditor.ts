@@ -5,10 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { CodeViewSyncDelay_Long, DefaultTabSize } from "@src/constants";
 import { MainContext } from "@_redux/main";
 import { setCodeViewTabSize } from "@_redux/main/codeView";
-import {
-  setCurrentFileContent,
-  setNeedToSelectCode,
-} from "@_redux/main/nodeTree";
+import { setNeedToSelectCode } from "@_redux/main/nodeTree";
 import { useAppState } from "@_redux/useAppState";
 
 import { getCodeViewTheme, getLanguageFromExtension } from "./helpers";
@@ -29,36 +26,25 @@ import { AppState } from "@src/_redux/store";
 import * as monaco from "monaco-editor";
 
 const useEditor = () => {
-  const { editorInstance, setEditorInstance, editorModels, setEditorModels } =
-    useMonacoEditor();
+  const {
+    editorInstance,
+    setEditorInstance,
+    editorModels,
+    setEditorModels,
+    isProgrammaticallyUpdated,
+  } = useMonacoEditor();
   const currentFileContent = useSelector(
     (state: AppState) => state.main.currentPage.content,
   );
+  const currentFileUid = useSelector(
+    (state: AppState) => state.main.currentPage.uid,
+  );
   const dispatch = useDispatch();
-  const {
-    theme: _theme,
-    autoSave,
-    isCodeTyping,
-    wordWrap,
-    isContentProgrammaticallyChanged,
-    currentFileUid,
-    fileTree,
-    activePanel,
-  } = useAppState();
+  const { theme: _theme, autoSave, isCodeTyping, fileTree } = useAppState();
   const { onUndo, onRedo } = useContext(MainContext);
 
   /* we need to keep the state of the app in a ref
   because onChange closure is not updated when the state changes */
-  const AppstateRef = useRef({
-    theme: _theme,
-    autoSave,
-    isCodeTyping,
-    wordWrap,
-    isContentProgrammaticallyChanged,
-    currentFileUid,
-    fileTree,
-    activePanel,
-  });
 
   // theme
   const [theme, setTheme] = useState<"vs-dark" | "light">();
@@ -153,44 +139,41 @@ const useEditor = () => {
 
   // handleOnChange
   const onChange = useCallback(
-    (value: string, changedFileUid: string) => {
-      if (
-        changedFileUid === AppstateRef.current.currentFileUid ||
-        changedFileUid === ""
-      ) {
-        dispatch(setCurrentFileContent(value));
-      } else {
-        const file = structuredClone(
-          AppstateRef.current.fileTree[changedFileUid],
-        );
-        if (file && file.data) {
-          const fileData = file.data;
-          fileData.content = value;
-          dispatch(setFileTreeNodes([file]));
-        }
+    (value: string) => {
+      console.log("currentFileUid", currentFileUid);
+      if (!currentFileUid) {
+        console.error("No current file uid");
+        return;
       }
 
-      if (!AppstateRef.current.isContentProgrammaticallyChanged) {
-        const selectedRange: Selection | null =
-          editorInstance?.getSelection() || null;
-        dispatch(
-          setNeedToSelectCode(
-            selectedRange
-              ? {
-                  startLineNumber: selectedRange.startLineNumber,
-                  startColumn: selectedRange.startColumn,
-                  endLineNumber: selectedRange.endLineNumber,
-                  endColumn: selectedRange.endColumn,
-                }
-              : null,
-          ),
-        );
+      const file = structuredClone(fileTree[currentFileUid]);
+      if (file && file.data) {
+        const fileData = file.data;
+        fileData.content = value;
+        dispatch(setFileTreeNodes([file]));
       }
+
+      // if (!isProgrammaticallyUpdated) {
+      //   const selectedRange: Selection | null =
+      //     editorInstance?.getSelection() || null;
+      //   dispatch(
+      //     setNeedToSelectCode(
+      //       selectedRange
+      //         ? {
+      //             startLineNumber: selectedRange.startLineNumber,
+      //             startColumn: selectedRange.startColumn,
+      //             endLineNumber: selectedRange.endLineNumber,
+      //             endColumn: selectedRange.endColumn,
+      //           }
+      //         : null,
+      //     ),
+      //   );
+      // }
 
       autoSave && debouncedAutoSave();
-      AppstateRef.current.isCodeTyping && dispatch(setIsCodeTyping(false));
+      isCodeTyping && dispatch(setIsCodeTyping(false));
     },
-    [autoSave, debouncedAutoSave],
+    [autoSave, debouncedAutoSave, currentFileUid],
   );
 
   const handleKeyDown = () => {
@@ -202,19 +185,19 @@ const useEditor = () => {
     [onChange],
   );
 
-  const handleOnChange = useCallback(
-    (value: string | undefined, changedFileUid: string) => {
-      if (value === undefined) return;
+  // const handleOnChange = useCallback(
+  //   (value: string | undefined) => {
+  //     if (value === undefined) return;
 
-      if (AppstateRef.current.isContentProgrammaticallyChanged) {
-        onChange(value, changedFileUid);
-      } else {
-        !AppstateRef.current.isCodeTyping && dispatch(setIsCodeTyping(true));
-        longDebouncedOnChange(value, changedFileUid);
-      }
-    },
-    [longDebouncedOnChange, onChange],
-  );
+  //     if (isProgrammaticallyUpdated) {
+  //       onChange(value);
+  //     } else {
+  //       !isCodeTyping && dispatch(setIsCodeTyping(true));
+  //       longDebouncedOnChange(value);
+  //     }
+  //   },
+  //   [longDebouncedOnChange, onChange],
+  // );
 
   // handlerEditorDidMount
   const handleEditorDidMount = useCallback(
@@ -229,7 +212,7 @@ const useEditor = () => {
         if (model) {
           const value = model.getValue();
           // Only trigger onChange if the change was made by the user (not programmatically)
-          if (!AppstateRef.current.isContentProgrammaticallyChanged) {
+          if (!isProgrammaticallyUpdated) {
             const selectedRange: Selection | null =
               editor.getSelection() || null;
 
@@ -248,9 +231,8 @@ const useEditor = () => {
                   : null,
               ),
             );
-            !AppstateRef.current.isCodeTyping &&
-              dispatch(setIsCodeTyping(true));
-            longDebouncedOnChange(value, AppstateRef.current.currentFileUid);
+            !isProgrammaticallyUpdated && dispatch(setIsCodeTyping(true));
+            longDebouncedOnChange(value);
           }
         }
       });
@@ -268,28 +250,6 @@ const useEditor = () => {
     action: "none" | "undo" | "redo";
     toggle: boolean;
   }>({ action: "none", toggle: false });
-
-  useEffect(() => {
-    AppstateRef.current = {
-      theme: _theme,
-      autoSave,
-      isCodeTyping,
-      wordWrap,
-      isContentProgrammaticallyChanged,
-      currentFileUid,
-      fileTree,
-      activePanel,
-    };
-  }, [
-    _theme,
-    autoSave,
-    isCodeTyping,
-    wordWrap,
-    isContentProgrammaticallyChanged,
-    currentFileUid,
-    fileTree,
-    activePanel,
-  ]);
 
   // set default tab-size
   useEffect(() => {
@@ -350,10 +310,10 @@ const useEditor = () => {
   }, [manageEditorModel]);
   return {
     handleEditorDidMount,
-    handleOnChange,
+    // handleOnChange,
     handleKeyDown,
     theme,
-
+    currentFileUid,
     language,
     updateLanguage,
 

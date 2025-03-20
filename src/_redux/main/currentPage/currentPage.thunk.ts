@@ -8,9 +8,16 @@ import {
   setCurrentPageNewNodeTree,
   setCurrentPagePreviewContent,
   setHoveredNodeUid,
+  setCurrentPage,
+  CurrentPageState,
 } from "./currentPage.slice";
 import { TreeStructure } from "@src/types/html.types";
 import htmlService from "@src/services/html.service";
+import { serialize } from "parse5";
+import { store } from "@src/_redux/store";
+import { getPreviewPath, markChangedFolders } from "@src/processor/helpers";
+import { setFileTreeNodes } from "../fileTree/slice";
+import { _writeIDBFile } from "@src/api/file/nohostApis";
 
 export const setCurrentPageNewNodeTreeThunk = createAsyncThunk(
   "currentPage/setCurrentPageNewNodeTree",
@@ -26,7 +33,7 @@ export const setCurrentPageNewNodeTreeThunk = createAsyncThunk(
   ) => {
     dispatch(setCurrentPageNewNodeTree(nodeTree));
 
-    // find uids of html and body node from the nodeTree to set initial expanded nodes
+    //find uids of html and body node from the nodeTree to set initial expanded nodes
     const initialExpandedNodes =
       htmlService.getInitialExpandedNodesFromNodeTree(nodeTree);
     dispatch(setExpandedNodeUids(initialExpandedNodes));
@@ -100,5 +107,64 @@ export const removeExpandedNodeUidThunk = createAsyncThunk(
   "currentPage/removeExpandedNodeUid",
   async (nodeUid: string, { dispatch }) => {
     dispatch(removeExpandedNodeUid(nodeUid));
+  },
+);
+
+export const setCurrentPageThunk = createAsyncThunk(
+  "currentPage/setCurrentPage",
+  async (currentPage: Partial<CurrentPageState>, { dispatch }) => {
+    const currentFileUid = currentPage.uid;
+    const currentFileContent = currentPage.content;
+    if (!currentFileUid || !currentFileContent) {
+      console.error("No current file uid or content", {
+        currentFileUid,
+        currentFileContent,
+      });
+      return;
+    }
+
+    const fileTree = store.getState().main.file.fileTree;
+    const file = fileTree[currentFileUid];
+    const structuredCloneFile = structuredClone(file);
+    const fileData = structuredCloneFile.data;
+    const orginalContent = fileData.content;
+    const ext = fileData.ext;
+
+    if (currentFileContent) {
+      if (ext === "html") {
+        const document = htmlService.parseHtml(currentFileContent);
+        const { complexNodeTree, document: previewDocument } =
+          htmlService.createNodeTree(document);
+        if (previewDocument) {
+          const previewContent = serialize(previewDocument);
+
+          if (structuredCloneFile) {
+            fileData.contentInApp = previewContent;
+          }
+        }
+        const previewPath = getPreviewPath(fileTree, file);
+        await _writeIDBFile(previewPath, fileData.contentInApp as string);
+        dispatch(
+          setCurrentPage({
+            ...currentPage,
+            content: currentFileContent,
+            newNodeTree: complexNodeTree,
+            designViewState: {
+              previewPath,
+              previewUrl: `rnbw${previewPath}`,
+              previewContent: fileData.contentInApp || "",
+            },
+          }),
+        );
+      } else {
+        fileData.contentInApp = "";
+      }
+      fileData.content = currentFileContent;
+      fileData.changed = orginalContent !== currentFileContent;
+      if (file.parentUid) {
+        markChangedFolders(fileTree, file, dispatch, fileData.changed);
+      }
+      dispatch(setFileTreeNodes([structuredCloneFile]));
+    }
   },
 );

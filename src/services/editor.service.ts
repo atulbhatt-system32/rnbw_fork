@@ -1,5 +1,7 @@
 import * as monaco from "monaco-editor";
 import { TFileNodeData } from "@_api/index";
+import { store } from "@_redux/store";
+import { setCurrentPageThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
 
 type FileTree = Record<string, { data: TFileNodeData }>;
 
@@ -112,6 +114,13 @@ export const updateModelContent = ({
         },
       ],
       () => null,
+    );
+
+    store.dispatch(
+      setCurrentPageThunk({
+        content: currentFileContent,
+        uid: currentFileUid,
+      }),
     );
 
     // Restore cursor and scroll position
