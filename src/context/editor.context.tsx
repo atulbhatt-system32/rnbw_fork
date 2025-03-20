@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useRef,
+} from "react";
 import * as monaco from "monaco-editor";
 
 interface MonacoEditorContextType {
@@ -12,6 +18,8 @@ interface MonacoEditorContextType {
   >;
   isEditorReady: boolean;
   setIsEditorReady: React.Dispatch<React.SetStateAction<boolean>>;
+  isProgrammaticallyUpdated: boolean;
+  setIsProgrammaticallyUpdated: (value: boolean) => void;
 }
 
 const MonacoEditorContext = createContext<MonacoEditorContextType | undefined>(
@@ -35,7 +43,7 @@ export const MonacoEditorProvider = ({ children }: { children: ReactNode }) => {
     Record<string, monaco.editor.ITextModel>
   >({});
   const [isEditorReady, setIsEditorReady] = useState(false);
-
+  const isProgrammaticallyUpdatedRef = useRef(false);
   return (
     <MonacoEditorContext.Provider
       value={{
@@ -45,6 +53,10 @@ export const MonacoEditorProvider = ({ children }: { children: ReactNode }) => {
         setEditorModels,
         isEditorReady,
         setIsEditorReady,
+        isProgrammaticallyUpdated: isProgrammaticallyUpdatedRef.current,
+        setIsProgrammaticallyUpdated: (value) => {
+          isProgrammaticallyUpdatedRef.current = value;
+        },
       }}
     >
       {children}
