@@ -10,7 +10,6 @@ import {
   TNodeUid,
 } from "@src/api";
 import { store } from "@src/_redux/store";
-import { setCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
 import { getPreviewPath } from "@src/processor/helpers";
 import { SystemDirectories } from "@src/commandMenu/SystemDirectories";
 import { FilerStats, TOsType } from "@src/types";
@@ -28,7 +27,7 @@ import {
   setCurrentProjectFileHandle,
   setFileHandlers,
 } from "@src/_redux/main/project";
-
+import { setCurrentPageThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
 /* eslint-disable @typescript-eslint/no-var-requires */
 const Filer = require("filer");
 export const path = Filer.path;
@@ -54,19 +53,23 @@ async function openFile(file: TFileNode, fileTree: TFileNodeTreeData) {
         htmlContent = getIndexHtmlContent();
       }
       store.dispatch(
-        setCurrentPage({
+        setCurrentPageThunk({
           designViewState: {
             previewPath: file.data.path,
             previewUrl: `rnbw${url}`,
             previewContent: htmlContent,
           },
           content: file.data.content,
+          extension: file.data.ext,
+          uid: file.uid,
         }),
       );
     } else {
       store.dispatch(
-        setCurrentPage({
+        setCurrentPageThunk({
           content: file.data.content,
+          extension: file.data.ext,
+          uid: file.uid,
         }),
       );
     }
@@ -224,52 +227,55 @@ async function getChildHandlerObjectFromEntry({
 }
 
 async function createFileHandlersObject(projectPath: string) {
-  return new Promise<TFileHandlerInfoObj>((resolve, reject) => {
+  // create root handler
+  const rootHandler: TFileHandlerInfo = {
+    uid: RootNodeUid,
+    parentUid: null,
+    children: [],
+    path: projectPath,
+    kind: "directory",
+    name: projectPath.replace("/", ""),
+  };
+
+  // create handlers obj for complex tree
+  const handlerObj: TFileHandlerInfoObj = { [RootNodeUid]: rootHandler };
+
+  // Use an async function to process directories with proper awaiting
+  async function processDirectory(dirHandler: TFileHandlerInfo) {
+    const { uid: parentUid, path: parentPath } = dirHandler;
+
     try {
-      // create root handler
-      const rootHandler: TFileHandlerInfo = {
-        uid: RootNodeUid,
-        parentUid: null,
-        children: [],
-        path: projectPath,
-        kind: "directory",
-        name: projectPath.replace("/", ""),
-      };
+      const entries = await readIndexDBDirectory(parentPath);
+      const processEntryPromises = entries.map(async (entry) => {
+        // skip stage preview files & hidden files
+        if (entry.startsWith(StagePreviewPathPrefix) || entry[0] === ".")
+          return;
 
-      // create handlers obj for complex tree
-      const handlerObj: TFileHandlerInfoObj = { [RootNodeUid]: rootHandler };
-
-      // loop through the project
-      const dirHandlers: TFileHandlerInfo[] = [rootHandler];
-      while (dirHandlers.length) {
-        const { uid: parentUid, path: parent_path } =
-          dirHandlers.shift() as TFileHandlerInfo;
-
-        readIndexDBDirectory(parent_path).then((entries) => {
-          return Promise.all(
-            entries.map(async (entry) => {
-              // skip stage preview files & hidden files
-              if (entry.startsWith(StagePreviewPathPrefix) || entry[0] === ".")
-                return;
-
-              const childHandler = await getChildHandlerObjectFromEntry({
-                entry,
-                parentUid,
-                parentPath: parent_path,
-              });
-
-              handlerObj[childHandler.uid] = childHandler;
-              handlerObj[parentUid].children.push(childHandler.uid);
-            }),
-          );
+        const childHandler = await getChildHandlerObjectFromEntry({
+          entry,
+          parentUid,
+          parentPath,
         });
-      }
 
-      resolve(handlerObj);
+        handlerObj[childHandler.uid] = childHandler;
+        handlerObj[parentUid].children.push(childHandler.uid);
+
+        // If it's a directory, process it recursively
+        if (childHandler.kind === "directory") {
+          await processDirectory(childHandler);
+        }
+      });
+
+      await Promise.all(processEntryPromises);
     } catch (err) {
-      reject(err);
+      console.error(`Error processing directory ${parentPath}:`, err);
     }
-  });
+  }
+
+  // Start the recursive processing with the root handler
+  await processDirectory(rootHandler);
+
+  return handlerObj;
 }
 
 async function buildFileTree(fileHandlersObj: TFileHandlerInfoObj) {
@@ -280,12 +286,13 @@ async function buildFileTree(fileHandlersObj: TFileHandlerInfoObj) {
         const { parentUid, children, path, kind, name, ext, content } =
           fileHandlersObj[uid];
 
+        const displayName = getFileNameWithoutExtension(name);
         const fileContent = content?.toString() || "";
         fileTree[uid] = {
           uid,
           parentUid,
           children,
-          displayName: name,
+          displayName,
           isEntity: kind === "file",
           data: {
             valid: true,
@@ -340,6 +347,7 @@ async function loadDefaultProject() {
   store.dispatch(setFileTree(fileTree));
   store.dispatch(setCurrentProjectFileHandle(null));
   store.dispatch(setInitialFileUidToOpen(initialFileUidToOpen));
+  openFile(fileTree[initialFileUidToOpen], fileTree);
   store.dispatch(setFileHandlers({}));
 }
 
