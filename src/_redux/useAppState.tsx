@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-
+import { objectToMap } from "./main/nodeTree/event/slice";
 import { AppState } from "./store";
 
 export const useAppState = () => {
@@ -45,7 +45,7 @@ export const useAppState = () => {
         present: {
           currentFileContent,
           selectedNodeUids,
-          nodeUidPositions,
+          nodeUidPositions: nodeUidPositionsObj,
           currentFileUid,
         },
         future: nodeEventFuture,
@@ -91,6 +91,9 @@ export const useAppState = () => {
 
   const nodeEventPastLength = nodeEventPast.length;
   const nodeEventFutureLength = nodeEventFuture.length;
+
+  // Convert the serialized object back to a Map
+  const nodeUidPositions = objectToMap(nodeUidPositionsObj);
 
   return {
     osType,

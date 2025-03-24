@@ -1,9 +1,14 @@
 import { TNodePositionInfo, TNodeUid } from "@_api/types";
 
+// Object representation of the Map for serialization
+export type TNodeUidPositionsObject = {
+  [key: string]: TNodePositionInfo;
+};
+
 export type TNodeEventReducerState = {
   currentFileContent: string;
   selectedNodeUids: TNodeUid[];
-  nodeUidPositions: Map<TNodeUid, TNodePositionInfo>;
+  nodeUidPositions: TNodeUidPositionsObject; // Changed from Map to serializable object
   currentFileUid: string;
 };
 

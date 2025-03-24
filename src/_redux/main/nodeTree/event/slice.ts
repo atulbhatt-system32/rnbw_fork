@@ -10,12 +10,33 @@ import {
   NodeTree_Event_StoreLimit,
   NodeTree_Event_UndoActionType,
 } from "./constants";
-import { TNodeEventReducerState } from "./types";
+import { TNodeEventReducerState, TNodeUidPositionsObject } from "./types";
+
+// Helper functions to convert between Map and plain object
+const mapToObject = (
+  map: Map<TNodeUid, TNodePositionInfo>,
+): TNodeUidPositionsObject => {
+  const obj: TNodeUidPositionsObject = {};
+  map.forEach((value, key) => {
+    obj[key] = value;
+  });
+  return obj;
+};
+
+const objectToMap = (
+  obj: TNodeUidPositionsObject,
+): Map<TNodeUid, TNodePositionInfo> => {
+  const map = new Map<TNodeUid, TNodePositionInfo>();
+  Object.entries(obj).forEach(([key, value]) => {
+    map.set(key, value as TNodePositionInfo);
+  });
+  return map;
+};
 
 const nodeEventReducerInitialState: TNodeEventReducerState = {
   currentFileContent: "",
   selectedNodeUids: [],
-  nodeUidPositions: new Map(),
+  nodeUidPositions: {}, // Store as object instead of Map
   currentFileUid: "",
 };
 const nodeEventSlice = createSlice({
@@ -34,8 +55,8 @@ const nodeEventSlice = createSlice({
       state,
       action: PayloadAction<Map<TNodeUid, TNodePositionInfo>>,
     ) {
-      const nodeUidPositions = action.payload;
-      state.nodeUidPositions = nodeUidPositions;
+      // Convert the Map to a serializable object
+      state.nodeUidPositions = mapToObject(action.payload);
     },
     setNeedToSelectNodeUids(state, action: PayloadAction<TNodeUid[]>) {
       const needToSelectNodeUids = action.payload;
@@ -54,6 +75,10 @@ export const {
   setNeedToSelectNodeUids,
   setCurrentFileUid,
 } = nodeEventSlice.actions;
+
+// Export helper for converting back to Map when needed
+export { objectToMap };
+
 export const NodeEventReducer = undoable(nodeEventSlice.reducer, {
   limit: NodeTree_Event_StoreLimit,
   undoType: NodeTree_Event_UndoActionType,

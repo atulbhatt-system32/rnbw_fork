@@ -1,5 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import createReducer from "./rootReducer";
+import {
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from "redux-persist";
 
 function configureAppStore(initialState = {}) {
   const store = configureStore({
@@ -7,7 +15,11 @@ function configureAppStore(initialState = {}) {
     preloadedState: initialState,
     devTools: process.env.NODE_ENV !== "production",
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ serializableCheck: true }),
+      getDefaultMiddleware({
+        serializableCheck: {
+          ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        },
+      }),
   });
 
   return store;

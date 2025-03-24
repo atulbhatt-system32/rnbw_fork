@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from "react";
 import * as monaco from "monaco-editor";
-
+import { TNodeUid, TNodePositionInfo } from "@_api/types";
 interface MonacoEditorContextType {
   editorInstance: monaco.editor.IStandaloneCodeEditor | null;
   setEditorInstance: React.Dispatch<
@@ -20,6 +20,10 @@ interface MonacoEditorContextType {
   setIsEditorReady: React.Dispatch<React.SetStateAction<boolean>>;
   isProgrammaticallyUpdated: boolean;
   setIsProgrammaticallyUpdated: (value: boolean) => void;
+  nodeUidPositions: Map<TNodeUid, TNodePositionInfo>;
+  setNodeUidPositions: React.Dispatch<
+    React.SetStateAction<Map<TNodeUid, TNodePositionInfo>>
+  >;
 }
 
 const MonacoEditorContext = createContext<MonacoEditorContextType | undefined>(
@@ -44,6 +48,9 @@ export const MonacoEditorProvider = ({ children }: { children: ReactNode }) => {
   >({});
   const [isEditorReady, setIsEditorReady] = useState(false);
   const isProgrammaticallyUpdatedRef = useRef(false);
+  const [nodeUidPositions, setNodeUidPositions] = useState<
+    Map<TNodeUid, TNodePositionInfo>
+  >(new Map());
   return (
     <MonacoEditorContext.Provider
       value={{
@@ -57,6 +64,8 @@ export const MonacoEditorProvider = ({ children }: { children: ReactNode }) => {
         setIsProgrammaticallyUpdated: (value) => {
           isProgrammaticallyUpdatedRef.current = value;
         },
+        nodeUidPositions,
+        setNodeUidPositions,
       }}
     >
       {children}
