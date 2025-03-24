@@ -74,12 +74,7 @@ export const useAppState = () => {
         isContentProgrammaticallyChanged,
         isCodeTyping,
       },
-      project: {
-        projectHandlers,
-        currentProjectFileHandle,
-        fileHandlers,
-        recentProject,
-      },
+      project: { projectHandlers, currentProjectFileHandle, fileHandlers },
       cmdk: {
         cmdkOpen,
         cmdkPages,
@@ -174,7 +169,6 @@ export const useAppState = () => {
     projectHandlers,
     currentProjectFileHandle,
     fileHandlers,
-    recentProject,
 
     cmdkOpen,
     cmdkPages,

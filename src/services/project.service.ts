@@ -15,6 +15,8 @@ import { SystemDirectories } from "@src/commandMenu/SystemDirectories";
 import { FilerStats, TOsType } from "@src/types";
 import {
   DefaultProjectPath,
+  LogAllow,
+  RecentProjectCount,
   RootNodeUid,
   StagePreviewPathPrefix,
 } from "@src/constants";
@@ -22,12 +24,14 @@ import { notify } from "./notificationService";
 import {
   setFileTree,
   setInitialFileUidToOpen,
+  TProjectContext,
 } from "@src/_redux/main/fileTree";
 import {
   setCurrentProjectFileHandle,
   setFileHandlers,
 } from "@src/_redux/main/project";
 import { setCurrentPageThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
+import { get, set } from "idb-keyval";
 /* eslint-disable @typescript-eslint/no-var-requires */
 const Filer = require("filer");
 export const path = Filer.path;
@@ -351,6 +355,41 @@ async function loadDefaultProject() {
   store.dispatch(setFileHandlers({}));
 }
 
+async function getRecentProjects() {
+  return await get("recent-project");
+}
+
+async function saveRecentProject(
+  fsType: TProjectContext,
+  projectHandle: FileSystemDirectoryHandle,
+) {
+  try {
+    const recentProjects = await get("recent-project");
+    const recentProjectsCopy = [...recentProjects];
+    for (let index = 0; index < recentProjectsCopy.length; ++index) {
+      if (
+        recentProjectsCopy[index].context === fsType &&
+        projectHandle?.name === recentProjectsCopy[index].name
+      ) {
+        recentProjectsCopy.splice(index, 1);
+        break;
+      }
+    }
+    if (recentProjectsCopy.length === RecentProjectCount) {
+      recentProjectsCopy.pop();
+    }
+    recentProjectsCopy.unshift({
+      context: fsType,
+      name: projectHandle.name,
+      handler: projectHandle,
+    });
+
+    await set("recent-project", recentProjectsCopy);
+  } catch (err) {
+    LogAllow && console.log("ERROR while saving recent project", err);
+  }
+}
+
 export default {
   openFile,
   reloadPage,
@@ -360,4 +399,6 @@ export default {
   initWelcomeProject,
   loadDefaultProject,
   createFileHandlersObject,
+  getRecentProjects,
+  saveRecentProject,
 };

@@ -23,7 +23,7 @@ import {
   PLACEHOLDERS,
 } from "./constants";
 import { SVGIcon } from "@src/components";
-
+import projectService from "@src/services/project.service";
 const iconMappping = {
   New: "/images/jumpstart/new.svg",
   Open: "/images/jumpstart/open.svg",
@@ -58,7 +58,6 @@ export const CommandDialog = ({ onClear, onJumpstart }: CommandDialogProps) => {
     currentCmdkPage,
     cmdkSearchContent,
     htmlReferenceData,
-    recentProject,
   } = useAppState();
 
   // hooks
@@ -86,6 +85,33 @@ export const CommandDialog = ({ onClear, onJumpstart }: CommandDialogProps) => {
     },
     [cmdkReference, currentCmdkPage],
   );
+
+  // Helper function for checking commands (first map usage)
+  const processReferences = useCallback(
+    (groupName: string, callback: (command: TCmdkReference) => void) => {
+      const reference = getCmdkReference(groupName);
+      if (Array.isArray(reference)) {
+        reference.forEach(callback);
+      }
+    },
+    [getCmdkReference],
+  );
+
+  // Helper function for rendering commands (second map usage)
+  const renderReferences = useCallback(
+    (
+      groupName: string,
+      callback: (command: TCmdkReference, index: number) => React.ReactNode,
+    ) => {
+      const reference = getCmdkReference(groupName);
+      if (Array.isArray(reference)) {
+        return reference.map(callback);
+      }
+      return [];
+    },
+    [getCmdkReference],
+  );
+
   // determines if need to show a group name or command option
   const isShowItem = useCallback(
     (command: TCmdkReference) => {
@@ -134,6 +160,7 @@ export const CommandDialog = ({ onClear, onJumpstart }: CommandDialogProps) => {
         if (filePath) navigate(filePath);
       } else if (isRecent(command.Group)) {
         const index = Number(command.Context);
+        const recentProject = await projectService.getRecentProjects();
         const projectContext = recentProject[index].context;
         const projectHandler = recentProject[index].handler;
         navigate("/");
@@ -144,7 +171,7 @@ export const CommandDialog = ({ onClear, onJumpstart }: CommandDialogProps) => {
         dispatch(setCurrentCommand({ action: command.Name }));
       }
     },
-    [currentCmdkPage, recentProject, fileTree],
+    [currentCmdkPage, fileTree],
   );
 
   const onKeyDown = useCallback(
@@ -254,7 +281,7 @@ export const CommandDialog = ({ onClear, onJumpstart }: CommandDialogProps) => {
                 cmdkReference[currentCmdkPage as TCmdkPage] || {},
               ).map((groupName: string) => {
                 let groupNameShow = false;
-                getCmdkReference(groupName)?.map((command: TCmdkReference) => {
+                processReferences(groupName, (command: TCmdkReference) => {
                   groupNameShow = isShowItem(command);
                 });
                 return (
@@ -266,8 +293,9 @@ export const CommandDialog = ({ onClear, onJumpstart }: CommandDialogProps) => {
                       </div>
                     )}
                     {/* show command option */}
-                    {getCmdkReference(groupName)?.map(
-                      (command: TCmdkReference, index) =>
+                    {renderReferences(
+                      groupName,
+                      (command: TCmdkReference, index: number) =>
                         isShowItem(command) && (
                           <CommandItem
                             key={`${command.Name}-${command.Context}-${index}`}

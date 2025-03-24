@@ -45,6 +45,7 @@ import { NodeIcon } from "./workspaceComponents/NodeIcon";
 import { TFilesReference } from "@rnbws/rfrncs.design";
 import useRnbw from "@_services/useRnbw";
 import projectService from "@src/services/project.service";
+import { TRecentProject } from "@src/_redux/main/project";
 
 const AutoExpandDelayOnDnD = 1 * 1000;
 export default function WorkspaceTreeView() {
@@ -61,7 +62,6 @@ export default function WorkspaceTreeView() {
     activePanel,
     filesReferenceData,
     currentProjectFileHandle,
-    recentProject,
     invalidFileNodes,
     hoveredFileUid,
   } = useAppState();
@@ -146,13 +146,15 @@ export default function WorkspaceTreeView() {
     if (isCurrentProject && isDifferentFile) {
       openFile(pathName);
     } else if (!isCurrentProject) {
-      const index = recentProject.findIndex(
-        (_recentProject) => _recentProject.name === project,
+      const recentProjects = await projectService.getRecentProjects();
+
+      const index = recentProjects.findIndex(
+        (_recentProject: TRecentProject) => _recentProject.name === project,
       );
 
       if (index >= 0) {
-        const projectContext = recentProject[index].context;
-        const projectHandler = recentProject[index].handler;
+        const projectContext = recentProjects[index].context;
+        const projectHandler = recentProjects[index].handler;
         if (projectHandler && currentFileUid !== projectHandler.name) {
           confirmFileChanges(fileTree) &&
             importProject(projectContext, projectHandler, true);
@@ -160,7 +162,7 @@ export default function WorkspaceTreeView() {
         openFile(pathName);
       }
     }
-  }, [project, rest, recentProject]);
+  }, [project, rest]);
 
   useEffect(() => {
     openFromURL();

@@ -1,15 +1,9 @@
 import { useCallback } from "react";
 
-import { set } from "idb-keyval";
 import { useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
-import {
-  LogAllow,
-  DefaultProjectPath,
-  RecentProjectCount,
-  RootNodeUid,
-} from "@src/constants";
+import { LogAllow, DefaultProjectPath, RootNodeUid } from "@src/constants";
 import {
   buildNohostIDB,
   createURLPath,
@@ -41,7 +35,6 @@ import { clearProjectSession } from "../helper";
 import {
   setCurrentProjectFileHandle,
   setFileHandlers,
-  setRecentProject,
 } from "@_redux/main/project";
 
 import projectService from "@src/services/project.service";
@@ -51,49 +44,10 @@ export const useHandlers = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const {
-    osType,
-    navigatorDropdownType,
-    project,
-    fileTree,
-    currentFileUid,
-    recentProject,
-  } = useAppState();
+  const { osType, navigatorDropdownType, project, fileTree, currentFileUid } =
+    useAppState();
 
   const { "*": rest } = useParams();
-
-  const saveRecentProject = useCallback(
-    async (
-      fsType: TProjectContext,
-      projectHandle: FileSystemDirectoryHandle,
-    ) => {
-      try {
-        const _recentProject = [...recentProject];
-        for (let index = 0; index < _recentProject.length; ++index) {
-          if (
-            _recentProject[index].context === fsType &&
-            projectHandle?.name === _recentProject[index].name
-          ) {
-            _recentProject.splice(index, 1);
-            break;
-          }
-        }
-        if (_recentProject.length === RecentProjectCount) {
-          _recentProject.pop();
-        }
-        _recentProject.unshift({
-          context: fsType,
-          name: projectHandle.name,
-          handler: projectHandle,
-        });
-        dispatch(setRecentProject(_recentProject));
-        await set("recent-project", _recentProject);
-      } catch (err) {
-        LogAllow && console.log("ERROR while saving recent project", err);
-      }
-    },
-    [recentProject],
-  );
 
   const importProject = useCallback(
     async (
@@ -139,7 +93,7 @@ export const useHandlers = () => {
 
           projectService.openFile(_fileTree[_initialFileUidToOpen], _fileTree);
 
-          await saveRecentProject(
+          await projectService.saveRecentProject(
             fsType,
             projectHandle as FileSystemDirectoryHandle,
           );
@@ -181,7 +135,7 @@ export const useHandlers = () => {
         dispatch(setDoingFileAction(false));
       }
     },
-    [osType, saveRecentProject, rest],
+    [osType, rest],
   );
 
   const reloadCurrentProject = useCallback(async () => {

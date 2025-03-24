@@ -29,8 +29,9 @@ import {
 } from "../helper";
 import { useDispatch } from "react-redux";
 import { setCmdkReferenceData } from "@_redux/main/cmdk";
-import { setRecentProject } from "@_redux/main/project";
+import { TRecentProject } from "@_redux/main/project";
 import { addRunningAction, removeRunningAction } from "@_redux/main/processor";
+import projectService from "@src/services/project.service";
 
 interface IUseCmdkReferenceData {
   htmlReferenceData: THtmlReferenceData;
@@ -46,7 +47,6 @@ export const useCmdkReferenceData = ({
     validNodeTree,
     nFocusedItem,
     cmdkSearchContent,
-    recentProject,
   } = useAppState();
 
   const [cmdkReferenceJumpstart, setCmdkReferenceJumpstart] =
@@ -87,8 +87,6 @@ export const useCmdkReferenceData = ({
               const sessionInfo: TSession | undefined =
                 await get("recent-project");
               if (sessionInfo) {
-                dispatch(setRecentProject(sessionInfo));
-
                 for (let index = 0; index < sessionInfo.length; ++index) {
                   const _recentProjectCommand = {
                     Name: sessionInfo[index].name,
@@ -165,12 +163,13 @@ export const useCmdkReferenceData = ({
     })();
   }, []);
 
-  const cmdkReferenceRecentProject = useMemo(() => {
+  const cmdkReferenceRecentProject = useMemo(async () => {
     const _cmdkReferenceRecentProject: TCmdkReference[] = [];
-    recentProject.map(({ context }, index) => {
+    const recentProject = await projectService.getRecentProjects();
+    recentProject.map(({ context, name }: TRecentProject, index: number) => {
       if (context != "idb") {
         _cmdkReferenceRecentProject.push({
-          Name: recentProject[index].name,
+          Name: name,
           Icon: "folder",
           Description: "",
           "Keyboard Shortcut": [
@@ -188,7 +187,7 @@ export const useCmdkReferenceData = ({
       }
     });
     return _cmdkReferenceRecentProject;
-  }, [recentProject]);
+  }, []);
   const cmdkReferenceAdd = useMemo<TCmdkGroupData>(() => {
     const data: TCmdkGroupData = {
       Files: [],

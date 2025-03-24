@@ -1,15 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import {
-  TFileHandlerCollection,
-  TProjectReducerState,
-  TRecentProject,
-} from "./types";
+import { TFileHandlerCollection, TProjectReducerState } from "./types";
 
 const projectReducerInitialState: TProjectReducerState = {
   projectHandlers: {},
   currentProjectFileHandle: null,
   fileHandlers: {},
-  recentProject: [],
 };
 const projectSlice = createSlice({
   name: "project",
@@ -30,16 +25,11 @@ const projectSlice = createSlice({
       const fileHandlers = action.payload;
       state.fileHandlers = fileHandlers;
     },
-    setRecentProject(state, action: PayloadAction<TRecentProject[]>) {
-      const recentProject = action.payload;
-      state.recentProject = recentProject;
-    },
   },
 });
 export const {
   setProjectHandlers,
   setCurrentProjectFileHandle,
   setFileHandlers,
-  setRecentProject,
 } = projectSlice.actions;
 export const ProjectReducer = projectSlice.reducer;
