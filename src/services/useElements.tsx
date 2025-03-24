@@ -8,7 +8,6 @@ import {
   NodeTree_Event_UndoActionType,
   setCopiedNodeDisplayName,
   setNeedToSelectNodePaths,
-  setSelectedNodeUids,
 } from "@_redux/main/nodeTree";
 import { setDidRedo, setDidUndo } from "@_redux/main/processor";
 import { useAppState } from "@_redux/useAppState";
@@ -36,6 +35,7 @@ import { notify } from "./notificationService";
 import { morphCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
 
 import { useMonacoEditor } from "@src/context/editor.context";
+import { setSelectedNodeUidsThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
 export default function useElements() {
   const {
     nSelectedItemsObj,
@@ -894,7 +894,7 @@ export default function useElements() {
   };
 
   const setSelectedElements = (uids: string[]) => {
-    dispatch(setSelectedNodeUids(uids));
+    dispatch(setSelectedNodeUidsThunk(uids));
   };
 
   //Delete

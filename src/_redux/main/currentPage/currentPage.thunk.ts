@@ -154,7 +154,7 @@ export const setCurrentPageThunk = createAsyncThunk(
           }),
         );
         if (currentPage.updateType === "type") {
-          htmlService.updateIframe(currentFileContent);
+          htmlService.updateIframe(fileData.contentInApp as string);
         }
       } else {
         fileData.contentInApp = "";

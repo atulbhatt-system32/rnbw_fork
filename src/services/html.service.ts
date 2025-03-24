@@ -244,6 +244,7 @@ function markSelectedElements(uids: string[]) {
     if (isWebComponent) {
       selectedElement = selectedElement?.firstElementChild;
     }
+
     selectedElement?.setAttribute("rnbwdev-rnbw-element-select", "");
   });
 }

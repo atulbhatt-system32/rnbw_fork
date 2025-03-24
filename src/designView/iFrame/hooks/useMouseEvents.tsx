@@ -4,8 +4,7 @@ import { useDispatch } from "react-redux";
 import { LogAllow, ShortDelay } from "@src/constants";
 import { getValidNodeUids } from "@_api/helpers";
 import { THtmlNodeData } from "@_api/node";
-import { setHoveredNodeUid } from "@_redux/main/nodeTree";
-import { setSelectedNodeUids } from "@_redux/main/nodeTree/event";
+
 import { setActivePanel } from "@_redux/main/processor";
 
 import {
@@ -30,6 +29,8 @@ import { useNavigate } from "react-router-dom";
 import useRnbw from "@_services/useRnbw";
 import { StageNodeIdAttr } from "@src/constants";
 import { useMonacoEditor } from "@src/context/editor.context";
+import { setHoveredNodeUidThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
+import { setSelectedNodeUidsThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
 export const useMouseEvents = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ export const useMouseEvents = () => {
       const { uid } = getValidElementWithUid(e.target as HTMLElement);
       if (!uid) return;
       if (getCommandKey(e, osType)) {
-        if (hoveredNodeUid !== uid) dispatch(setHoveredNodeUid(uid));
+        if (hoveredNodeUid !== uid) dispatch(setHoveredNodeUidThunk(uid));
         iframeRefRef.current?.focus();
       } else {
         const isSelectedChild = isChild({
@@ -71,14 +72,14 @@ export const useMouseEvents = () => {
             : getBodyChild({ uids: [uid], nodeTree: nodeTreeRef.current });
 
         if (targetUids[0] !== hoveredNodeUid) {
-          dispatch(setHoveredNodeUid(targetUids[0]));
+          dispatch(setHoveredNodeUidThunk(targetUids[0]));
         }
       }
     },
     [],
   );
   const onMouseLeave = () => {
-    dispatch(setHoveredNodeUid(""));
+    dispatch(setHoveredNodeUidThunk(""));
   };
 
   // click, dblclick handlers
@@ -143,7 +144,7 @@ export const useMouseEvents = () => {
             );
           }
         }
-        !same && dispatch(setSelectedNodeUids(targetUids));
+        !same && dispatch(setSelectedNodeUidsThunk(targetUids));
       })();
 
       // content-editable operation
@@ -235,8 +236,9 @@ export const useMouseEvents = () => {
       const same = areArraysEqual(selectedItemsRef.current, [
         !targetUid ? uid : targetUid,
       ]);
-      !same && dispatch(setSelectedNodeUids([!targetUid ? uid : targetUid]));
-      if (hoveredNodeUid !== "") dispatch(setHoveredNodeUid(""));
+      !same &&
+        dispatch(setSelectedNodeUidsThunk([!targetUid ? uid : targetUid]));
+      if (hoveredNodeUid !== "") dispatch(setHoveredNodeUidThunk(""));
 
       if (targetUid) return;
       if (!ele.getAttribute("rnbw-text-element")) return;

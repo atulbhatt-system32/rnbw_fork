@@ -10,9 +10,9 @@ import { TCmdkKeyMap } from "@src/types";
 import { getBodyChild, getValidElementWithUid } from "../helpers";
 
 import { eventListenersStatesRefType } from "../IFrame";
-import { setHoveredNodeUid } from "@_redux/main/nodeTree";
 import useRnbw from "@_services/useRnbw";
 import { useMonacoEditor } from "@src/context/editor.context";
+import { setHoveredNodeUidThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
 export const useCmdk = () => {
   const dispatch = useDispatch();
   const rnbw = useRnbw();
@@ -67,7 +67,7 @@ export const useCmdk = () => {
           hoveredTargetRef.current as HTMLElement,
         );
         if (!uid) return;
-        if (hoveredNodeUid !== uid) dispatch(setHoveredNodeUid(uid));
+        if (hoveredNodeUid !== uid) dispatch(setHoveredNodeUidThunk(uid));
       }
       const cmdk: TCmdkKeyMap = {
         cmd: getCommandKey(e, osType),
@@ -181,7 +181,7 @@ export const useCmdk = () => {
           nodeTree: nodeTreeRef.current,
         });
         if (targetUid[0] !== hoveredNodeUid)
-          dispatch(setHoveredNodeUid(targetUid[0]));
+          dispatch(setHoveredNodeUidThunk(targetUid[0]));
       }
     },
     [],

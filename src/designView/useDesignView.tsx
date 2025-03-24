@@ -110,7 +110,7 @@ export const useDesignView = (): DesignViewProps => {
 
       switch (type) {
         case "nodeHover":
-          //   handleNodeHover(nodeId);
+          handleNodeHover(nodeId);
           break;
         case "propagatedNodeHover":
           handleNodeHover(nodeId);
