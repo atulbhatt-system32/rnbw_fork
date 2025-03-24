@@ -1,11 +1,10 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
-import { editor, Selection } from "monaco-editor";
+import { editor } from "monaco-editor";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeViewSyncDelay_Long, DefaultTabSize } from "@src/constants";
 import { MainContext } from "@_redux/main";
 import { setCodeViewTabSize } from "@_redux/main/codeView";
-import { setNeedToSelectCode } from "@_redux/main/nodeTree";
 import { useAppState } from "@_redux/useAppState";
 
 import { getCodeViewTheme, getLanguageFromExtension } from "./helpers";
@@ -22,8 +21,9 @@ import {
   recoverMissingContent,
   updateModelContent,
 } from "@src/services/editor.service";
-import { AppState } from "@src/_redux/store";
+import { AppState, store } from "@src/_redux/store";
 import * as monaco from "monaco-editor";
+import { setCurrentPageThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
 
 const useEditor = () => {
   const {
@@ -140,18 +140,28 @@ const useEditor = () => {
   // handleOnChange
   const onChange = useCallback(
     (value: string) => {
-      console.log("currentFileUid", currentFileUid);
+      // Getting the values from the store because the closure is not updated when the state changes
+      const currentFileUid = store.getState().main.currentPage.uid;
       if (!currentFileUid) {
         console.error("No current file uid");
         return;
       }
 
+      const fileTree = store.getState().main.file.fileTree;
       const file = structuredClone(fileTree[currentFileUid]);
       if (file && file.data) {
         const fileData = file.data;
         fileData.content = value;
         dispatch(setFileTreeNodes([file]));
       }
+
+      dispatch(
+        setCurrentPageThunk({
+          uid: currentFileUid,
+          content: value,
+          updateType: "type",
+        }),
+      );
 
       // if (!isProgrammaticallyUpdated) {
       //   const selectedRange: Selection | null =
@@ -173,7 +183,7 @@ const useEditor = () => {
       autoSave && debouncedAutoSave();
       isCodeTyping && dispatch(setIsCodeTyping(false));
     },
-    [autoSave, debouncedAutoSave, currentFileUid],
+    [autoSave, debouncedAutoSave, currentFileUid, dispatch, fileTree],
   );
 
   const handleKeyDown = () => {
@@ -206,32 +216,31 @@ const useEditor = () => {
       setEditorInstance(editor);
 
       // Set up model change listener
-      editor.onDidChangeModelContent((event) => {
-        console.log("Model content changed:", event);
+      editor.onDidChangeModelContent(() => {
         const model = editor.getModel();
         if (model) {
           const value = model.getValue();
           // Only trigger onChange if the change was made by the user (not programmatically)
           if (!isProgrammaticallyUpdated) {
-            const selectedRange: Selection | null =
-              editor.getSelection() || null;
+            // const selectedRange: Selection | null =
+            //   editor.getSelection() || null;
 
-            // Update code selection state
-            _setCodeSelection(selectedRange);
+            // // Update code selection state
+            // _setCodeSelection(selectedRange);
 
-            dispatch(
-              setNeedToSelectCode(
-                selectedRange
-                  ? {
-                      startLineNumber: selectedRange.startLineNumber,
-                      startColumn: selectedRange.startColumn,
-                      endLineNumber: selectedRange.endLineNumber,
-                      endColumn: selectedRange.endColumn,
-                    }
-                  : null,
-              ),
-            );
-            !isProgrammaticallyUpdated && dispatch(setIsCodeTyping(true));
+            // dispatch(
+            //   setNeedToSelectCode(
+            //     selectedRange
+            //       ? {
+            //           startLineNumber: selectedRange.startLineNumber,
+            //           startColumn: selectedRange.startColumn,
+            //           endLineNumber: selectedRange.endLineNumber,
+            //           endColumn: selectedRange.endColumn,
+            //         }
+            //       : null,
+            //   ),
+            // );
+            // !isProgrammaticallyUpdated && dispatch(setIsCodeTyping(true));
             longDebouncedOnChange(value);
           }
         }
@@ -308,6 +317,11 @@ const useEditor = () => {
   useEffect(() => {
     manageEditorModel();
   }, [manageEditorModel]);
+
+  useEffect(() => {
+    console.log("currentFileUid", currentFileUid);
+  }, [currentFileUid]);
+
   return {
     handleEditorDidMount,
     // handleOnChange,
