@@ -5,6 +5,9 @@ import { notify } from "./notificationService";
 import { TreeNodeData, TreeStructure, HtmlNode } from "@src/types/html.types";
 import { RnbwEditableNodeAttr, StageNodeIdAttr } from "@src/constants";
 
+//@ts-expect-error - allow importing idiomorph
+import Idiomorph from "idiomorph";
+
 function parseHtml(html: string) {
   const document = parse(html, {
     sourceCodeLocationInfo: true,
@@ -317,6 +320,44 @@ function makeAllEditableNodesNonEditable() {
   }
 }
 
+function updateIframe(updatedHtml: string) {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  if (iframe) {
+    const iframeDoc = iframe.contentDocument;
+    if (!iframeDoc) {
+      console.error("Iframe document not found");
+      return;
+    }
+    const htmlElement = iframeDoc.getElementsByTagName("html")[0];
+    if (!htmlElement) {
+      console.error("HTML element not found");
+      return;
+    }
+    const parser = new DOMParser();
+    const newDoc = parser.parseFromString(updatedHtml, "text/html");
+    const newContent = newDoc.documentElement;
+
+    Idiomorph.morph(htmlElement, newContent.innerHTML, {
+      morphStyle: "innerHTML",
+      head: { style: "morph" },
+      callbacks: {
+        beforeNodeRemoved: (node: Element) => {
+          if (node.hasAttribute("im-preserve")) {
+            return false;
+          }
+          return true;
+        },
+        beforeNodeMorphed: (oldNode: Element, newNode: Node) => {
+          if (newNode instanceof HTMLElement && newNode.tagName.includes("-")) {
+            return false;
+          }
+          return true;
+        },
+      },
+    });
+  }
+}
+
 export default {
   parseHtml,
   createNodeTree,
@@ -329,4 +370,5 @@ export default {
   checkIsNodeWebComponent,
   makeAllEditableNodesNonEditable,
   findAndGetAllEditableNodes,
+  updateIframe,
 };

@@ -116,10 +116,6 @@ export const setCurrentPageThunk = createAsyncThunk(
     const currentFileUid = currentPage.uid;
     const currentFileContent = currentPage.content;
     if (!currentFileUid || !currentFileContent) {
-      console.error("No current file uid or content", {
-        currentFileUid,
-        currentFileContent,
-      });
       return;
     }
 
@@ -154,8 +150,12 @@ export const setCurrentPageThunk = createAsyncThunk(
               previewUrl: `rnbw${previewPath}`,
               previewContent: fileData.contentInApp || "",
             },
+            uid: currentFileUid,
           }),
         );
+        if (currentPage.updateType === "type") {
+          htmlService.updateIframe(currentFileContent);
+        }
       } else {
         fileData.contentInApp = "";
       }
