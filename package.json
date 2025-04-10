@@ -31,7 +31,7 @@
     "file-system-access": "^1.0.4",
     "filer": "^1.4.1",
     "idb-keyval": "^6.2.0",
-    "idiomorph": "^0.7.1",
+    "idiomorph": "^0.7.3",
     "jszip": "^3.10.1",
     "monaco-editor": "^0.41.0",
     "morphdom": "^2.7.1",

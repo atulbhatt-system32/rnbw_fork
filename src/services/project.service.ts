@@ -356,7 +356,7 @@ async function loadDefaultProject() {
 }
 
 async function getRecentProjects() {
-  return await get("recent-project");
+  return (await get("recent-project")) || [];
 }
 
 async function saveRecentProject(
