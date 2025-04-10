@@ -18,6 +18,10 @@ function parseHtml(html: string) {
 let maxNodeUid = 0; // Initialize the counter for unique IDs
 
 function generateUniqueNodeId(node: Element): string {
+  /* This is to ensure that the html node is always the first node */
+  if (node.nodeName === "html") {
+    maxNodeUid = 0;
+  }
   return `${node.nodeName}${++maxNodeUid}`;
 }
 
