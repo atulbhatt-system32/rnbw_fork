@@ -222,12 +222,19 @@ function clearSelectedElements() {
   });
 }
 
-function clearHoveredElements() {
+function clearHoveredElements(hoveredElement?: Element) {
   const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
   const hoveredElements = iframe?.contentWindow?.document.querySelectorAll(
     `[rnbwdev-rnbw-element-hover]`,
   );
   hoveredElements?.forEach((ele) => {
+    if (
+      hoveredElement &&
+      ele.getAttribute("rnbwdev-rnbw-element-hover") ===
+        hoveredElement.getAttribute("rnbwdev-rnbw-element-hover")
+    ) {
+      return;
+    }
     ele.removeAttribute("rnbwdev-rnbw-element-hover");
   });
 }
@@ -255,13 +262,15 @@ function markSelectedElements(uids: string[]) {
 
 function markHoveredElement(uid: string) {
   const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
-  clearHoveredElements();
+  // clearHoveredElements();
   // if it's a web component, should select its first child element
   const hoveredElement = iframe?.contentWindow?.document?.querySelector(
     `[${StageNodeIdAttr}="${uid}"]`,
   );
-
-  hoveredElement?.setAttribute("rnbwdev-rnbw-element-hover", "");
+  if (hoveredElement) {
+    clearHoveredElements(hoveredElement);
+    hoveredElement?.setAttribute("rnbwdev-rnbw-element-hover", "");
+  }
 }
 
 function makeNodeEditable(uid: string, clickX?: number, clickY?: number) {
