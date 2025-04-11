@@ -1,23 +1,23 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { store } from "@src/_redux/store";
+import { _writeIDBFile } from "@src/api/file/nohostApis";
+import { getPreviewPath, markChangedFolders } from "@src/processor/helpers";
+import htmlService from "@src/services/html.service";
+import { TreeStructure } from "@src/types/html.types";
+import { serialize } from "parse5";
+import { setFileTreeNodes } from "../fileTree/slice";
 import {
-  setSelectedNodeUids,
-  setFocusedNodeUid,
-  setExpandedNodeUids,
   addExpandedNodeUid,
+  CurrentPageState,
   removeExpandedNodeUid,
+  setCurrentPage,
   setCurrentPageNewNodeTree,
   setCurrentPagePreviewContent,
+  setExpandedNodeUids,
+  setFocusedNodeUid,
   setHoveredNodeUid,
-  setCurrentPage,
-  CurrentPageState,
+  setSelectedNodeUids,
 } from "./currentPage.slice";
-import { TreeStructure } from "@src/types/html.types";
-import htmlService from "@src/services/html.service";
-import { serialize } from "parse5";
-import { store } from "@src/_redux/store";
-import { getPreviewPath, markChangedFolders } from "@src/processor/helpers";
-import { setFileTreeNodes } from "../fileTree/slice";
-import { _writeIDBFile } from "@src/api/file/nohostApis";
 
 export const setCurrentPageNewNodeTreeThunk = createAsyncThunk(
   "currentPage/setCurrentPageNewNodeTree",
@@ -115,10 +115,9 @@ export const setCurrentPageThunk = createAsyncThunk(
   async (currentPage: Partial<CurrentPageState>, { dispatch }) => {
     const currentFileUid = currentPage.uid;
     const currentFileContent = currentPage.content;
-    if (!currentFileUid || !currentFileContent) {
+    if (!currentFileUid || currentFileContent == null) {
       return;
     }
-
     const fileTree = store.getState().main.file.fileTree;
     const file = fileTree[currentFileUid];
     const structuredCloneFile = structuredClone(file);
@@ -126,8 +125,9 @@ export const setCurrentPageThunk = createAsyncThunk(
     const orginalContent = fileData.content;
     const ext = fileData.ext;
 
-    if (currentFileContent) {
-      if (ext === "html") {
+    // bcuz currentFileContent can be empty string
+    if (currentFileContent !== null) {
+      if (ext === "html" && currentFileContent !== "") {
         const document = htmlService.parseHtml(currentFileContent);
         const { complexNodeTree, document: previewDocument } =
           htmlService.createNodeTree(document);
@@ -149,6 +149,7 @@ export const setCurrentPageThunk = createAsyncThunk(
               previewPath,
               previewUrl: `rnbw${previewPath}`,
               previewContent: fileData.contentInApp || "",
+              uid: currentFileUid,
             },
             uid: currentFileUid,
           }),
@@ -157,6 +158,13 @@ export const setCurrentPageThunk = createAsyncThunk(
           htmlService.updateIframe(fileData.contentInApp as string);
         }
       } else {
+        dispatch(
+          setCurrentPage({
+            ...currentPage,
+            content: currentFileContent,
+            uid: currentFileUid,
+          }),
+        );
         fileData.contentInApp = "";
       }
       fileData.content = currentFileContent;

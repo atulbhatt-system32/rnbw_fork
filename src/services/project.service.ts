@@ -1,4 +1,14 @@
-import eventEmitter from "./eventEmitter";
+import { setCurrentPageThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
+import {
+  setFileTree,
+  setInitialFileUidToOpen,
+  TProjectContext,
+} from "@src/_redux/main/fileTree";
+import {
+  setCurrentProjectFileHandle,
+  setFileHandlers,
+} from "@src/_redux/main/project";
+import { store } from "@src/_redux/store";
 import {
   getIndexHtmlContent,
   getInitialCssContent,
@@ -9,10 +19,7 @@ import {
   TFileNodeTreeData,
   TNodeUid,
 } from "@src/api";
-import { store } from "@src/_redux/store";
-import { getPreviewPath } from "@src/processor/helpers";
 import { SystemDirectories } from "@src/commandMenu/SystemDirectories";
-import { FilerStats, TOsType } from "@src/types";
 import {
   DefaultProjectPath,
   LogAllow,
@@ -20,18 +27,11 @@ import {
   RootNodeUid,
   StagePreviewPathPrefix,
 } from "@src/constants";
-import { notify } from "./notificationService";
-import {
-  setFileTree,
-  setInitialFileUidToOpen,
-  TProjectContext,
-} from "@src/_redux/main/fileTree";
-import {
-  setCurrentProjectFileHandle,
-  setFileHandlers,
-} from "@src/_redux/main/project";
-import { setCurrentPageThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
+import { getPreviewPath } from "@src/processor/helpers";
+import { FilerStats, TOsType } from "@src/types";
 import { get, set } from "idb-keyval";
+import eventEmitter from "./eventEmitter";
+import { notify } from "./notificationService";
 /* eslint-disable @typescript-eslint/no-var-requires */
 const Filer = require("filer");
 export const path = Filer.path;
@@ -62,6 +62,7 @@ async function openFile(file: TFileNode, fileTree: TFileNodeTreeData) {
             previewPath: file.data.path,
             previewUrl: `rnbw${url}`,
             previewContent: htmlContent,
+            uid: file.uid,
           },
           content: file.data.content,
           extension: file.data.ext,

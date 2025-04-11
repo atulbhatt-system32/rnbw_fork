@@ -13,6 +13,7 @@ export interface CurrentPageState {
     previewPath: string;
     previewUrl: string | null;
     previewContent: string;
+    uid: string;
   };
   nodeTreeViewState: {
     selectedNodeUids: string[];
@@ -37,6 +38,7 @@ const initialState: CurrentPageState = {
     previewPath: "",
     previewUrl: null,
     previewContent: "",
+    uid: "",
   },
   updateType: "load",
   newNodeTree: {},

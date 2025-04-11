@@ -1,10 +1,10 @@
 import { useContext, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 
-import { getNodeUidByCodeSelection } from "@src/codeView";
-import { markSelectedElements } from "@src/designView/iFrame/helpers";
-import { LogAllow } from "@src/constants";
 import { _writeIDBFile } from "@_api/file";
+import { getNodeUidByCodeSelection } from "@src/codeView";
+import { LogAllow } from "@src/constants";
+import { markSelectedElements } from "@src/designView/iFrame/helpers";
 
 import { TNodeUid } from "@_api/types";
 import { MainContext } from "@_redux/main";
@@ -33,28 +33,28 @@ import {
 import { useAppState } from "@_redux/useAppState";
 
 import {
+  addRunningAction,
+  removeRunningAction,
+  setLoadingFalse,
+  setLoadingTrue,
+} from "@_redux/main/processor";
+import {
   getNeedToExpandNodeUids,
   getNodeUidToBeSelectedAtFirst,
   getPreviewPath,
   getValidNodeTree,
   markChangedFolders,
 } from "../helpers";
-import {
-  addRunningAction,
-  removeRunningAction,
-  setLoadingFalse,
-  setLoadingTrue,
-} from "@_redux/main/processor";
 
-import { getObjKeys } from "@src/helper";
-import { getFileExtension } from "@src/sidebarView/navigatorPanel/helpers";
 import { useElementHelper } from "@_services/useElementsHelper";
+import { getObjKeys } from "@src/helper";
 import { notify } from "@src/services/notificationService";
+import { getFileExtension } from "@src/sidebarView/navigatorPanel/helpers";
 
 // import Idiomorph from "idiomorph";
 import { setCurrentPage } from "@src/_redux/main/currentPage/currentPage.slice";
-import htmlService from "@src/services/html.service";
 import { setCurrentPageNewNodeTreeThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
+import htmlService from "@src/services/html.service";
 import { serialize } from "parse5";
 export const useNodeTreeEvent = () => {
   const dispatch = useDispatch();
@@ -203,6 +203,7 @@ export const useNodeTreeEvent = () => {
                 previewPath: fileData.path,
                 previewUrl: `rnbw${previewPath}`,
                 previewContent: fileData.contentInApp || "",
+                uid: currentFileUid,
               },
               nodeTree: nodeTree,
             }),
