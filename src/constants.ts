@@ -6,6 +6,7 @@ export const RnbwEditableNodeAttr = "rnbwdev-rnbw-editable";
 export const RootNodeUid = "ROOT";
 export const DefaultProjectPath = "/untitled";
 export const StagePreviewPathPrefix = "rnbw-stage-preview-";
+export const HoverableAttribute = "rnbwdev-rnbw-element-hover";
 export const CodeViewSyncDelay = 100;
 export const CodeViewSyncDelay_Long = 1 * 1000;
 export const AutoSaveDelay = 5000;

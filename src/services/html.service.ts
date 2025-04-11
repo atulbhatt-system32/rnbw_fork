@@ -1,10 +1,15 @@
-import { RootNodeUid } from "@src/constants";
+import {
+  HoverableAttribute,
+  RnbwEditableNodeAttr,
+  RootNodeUid,
+  StageNodeIdAttr,
+} from "@src/constants";
+import { HtmlNode, TreeNodeData, TreeStructure } from "@src/types/html.types";
 import { parse } from "parse5";
 import { Document } from "parse5/dist/tree-adapters/default";
 import { notify } from "./notificationService";
-import { TreeNodeData, TreeStructure, HtmlNode } from "@src/types/html.types";
-import { RnbwEditableNodeAttr, StageNodeIdAttr } from "@src/constants";
 
+import { store } from "@src/_redux/store";
 //@ts-expect-error - allow importing idiomorph
 import Idiomorph from "idiomorph";
 
@@ -222,20 +227,18 @@ function clearSelectedElements() {
   });
 }
 
-function clearHoveredElements(hoveredElement?: Element) {
+function clearOtherHoveredElements(keepElement?: Element) {
   const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
-  const hoveredElements = iframe?.contentWindow?.document.querySelectorAll(
-    `[rnbwdev-rnbw-element-hover]`,
-  );
-  hoveredElements?.forEach((ele) => {
-    if (
-      hoveredElement &&
-      ele.getAttribute("rnbwdev-rnbw-element-hover") ===
-        hoveredElement.getAttribute("rnbwdev-rnbw-element-hover")
-    ) {
+  if (!iframe?.contentWindow?.document) return;
+  const doc = iframe.contentWindow.document;
+
+  const hoveredElements = doc.querySelectorAll(`[${HoverableAttribute}]`);
+
+  hoveredElements?.forEach((el) => {
+    if (keepElement && el === keepElement) {
       return;
     }
-    ele.removeAttribute("rnbwdev-rnbw-element-hover");
+    el.removeAttribute(HoverableAttribute);
   });
 }
 
@@ -262,14 +265,20 @@ function markSelectedElements(uids: string[]) {
 
 function markHoveredElement(uid: string) {
   const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
-  // clearHoveredElements();
-  // if it's a web component, should select its first child element
-  const hoveredElement = iframe?.contentWindow?.document?.querySelector(
-    `[${StageNodeIdAttr}="${uid}"]`,
-  );
+  if (!iframe?.contentWindow?.document || !uid) {
+    clearOtherHoveredElements();
+    return;
+  }
+  const doc = iframe.contentWindow.document;
+  const hoveredElement = doc.querySelector(`[${StageNodeIdAttr}="${uid}"]`);
+
   if (hoveredElement) {
-    clearHoveredElements(hoveredElement);
-    hoveredElement?.setAttribute("rnbwdev-rnbw-element-hover", "");
+    clearOtherHoveredElements(hoveredElement);
+    if (!hoveredElement.hasAttribute(HoverableAttribute)) {
+      hoveredElement.setAttribute(HoverableAttribute, "");
+    }
+  } else {
+    clearOtherHoveredElements();
   }
 }
 
@@ -372,6 +381,40 @@ function updateIframe(updatedHtml: string) {
   }
 }
 
+function getHoverableNodeUids(): string[] {
+  const selectedNodeUids =
+    store.getState().main.currentPage?.nodeTreeViewState.selectedNodeUids;
+  const selectedNodeUid =
+    selectedNodeUids.length > 0
+      ? selectedNodeUids[selectedNodeUids.length - 1]
+      : null;
+  const nodeTree = store.getState().main.currentPage?.newNodeTree;
+  if (!nodeTree) {
+    return [];
+  }
+
+  const hoverableUids = new Set<string>();
+  let currentId: string | null = selectedNodeUid;
+
+  while (currentId && currentId !== RootNodeUid) {
+    hoverableUids.add(currentId);
+
+    // Explicitly type parentId
+    const parentId: string | undefined = nodeTree[currentId]?.data.parentId;
+
+    if (parentId && nodeTree[parentId]) {
+      nodeTree[parentId].children.forEach((siblingId) => {
+        hoverableUids.add(siblingId);
+      });
+    } else {
+      break;
+    }
+    currentId = parentId;
+  }
+
+  return Array.from(hoverableUids);
+}
+
 export default {
   parseHtml,
   createNodeTree,
@@ -385,4 +428,5 @@ export default {
   makeAllEditableNodesNonEditable,
   findAndGetAllEditableNodes,
   updateIframe,
+  getHoverableNodeUids,
 };

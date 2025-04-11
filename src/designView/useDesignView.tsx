@@ -1,14 +1,14 @@
+import { TNodeUid } from "@_api/types";
+import { AppState } from "@src/_redux/store";
 import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AppState } from "@src/_redux/store";
-import { TNodeUid } from "@_api/types";
 
 import {
   setHoveredNodeUidThunk,
   setSelectedNodeUidsThunk,
 } from "@src/_redux/main/currentPage/currentPage.thunk";
-import htmlService from "@src/services/html.service";
 import globalService from "@src/services/global.service";
+import htmlService from "@src/services/html.service";
 export interface DesignViewProps {
   hoveredNode: TNodeUid | null;
   selectedNodes: TNodeUid[];
@@ -31,6 +31,10 @@ export const useDesignView = (): DesignViewProps => {
       state.main.currentPage.nodeTreeViewState.selectedNodeUids,
   );
 
+  const nodeTree = useSelector(
+    (state: AppState) => state.main.currentPage.newNodeTree,
+  );
+
   const { showCodePanel, showTreePanel } = useSelector(
     (state: AppState) => state.global.panelsState,
   );
@@ -38,9 +42,22 @@ export const useDesignView = (): DesignViewProps => {
   // Event handlers
   const handleNodeHover = useCallback(
     (nodeId: TNodeUid | null) => {
-      dispatch(setHoveredNodeUidThunk(nodeId || ""));
+      if (nodeId) {
+        dispatch(setHoveredNodeUidThunk(nodeId));
+        htmlService.markHoveredElement(nodeId);
+      }
     },
     [dispatch],
+  );
+
+  const handlePropogatedNodeHover = useCallback(
+    (hoveredNodeUid: TNodeUid | null) => {
+      const hoverableUids = htmlService.getHoverableNodeUids();
+      if (hoveredNodeUid !== null && hoverableUids.includes(hoveredNodeUid)) {
+        htmlService.markHoveredElement(hoveredNodeUid);
+      }
+    },
+    [nodeTree, selectedNodes],
   );
 
   const handleNodeSelect = useCallback(
@@ -101,7 +118,6 @@ export const useDesignView = (): DesignViewProps => {
   // Listen for messages from the iframe
   useEffect(() => {
     const handleIframeMessage = (event: MessageEvent) => {
-      // Only handle messages from our iframe
       if (!event.data || typeof event.data !== "object") {
         return;
       }
@@ -113,7 +129,7 @@ export const useDesignView = (): DesignViewProps => {
           handleNodeHover(nodeId);
           break;
         case "propagatedNodeHover":
-          handleNodeHover(nodeId);
+          handlePropogatedNodeHover(nodeId);
           break;
         case "nodeSelect":
           handleNodeSelect(nodeId);
@@ -142,10 +158,14 @@ export const useDesignView = (): DesignViewProps => {
       window.removeEventListener("message", handleIframeMessage);
     };
   }, [
+    nodeTree,
+    selectedNodes,
     handleNodeHover,
+    handlePropogatedNodeHover,
     handleNodeSelect,
     handleMultiNodeSelect,
     handleNodeDblClick,
+    handleNodeBlur,
     handleKeyDown,
   ]);
 

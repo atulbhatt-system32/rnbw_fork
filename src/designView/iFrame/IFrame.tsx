@@ -9,22 +9,22 @@ import React, {
 
 import { useDispatch, useSelector } from "react-redux";
 
-import { LogAllow } from "@src/constants";
 import { TNodeTreeData, TNodeUid } from "@_api/types";
 import { MainContext } from "@_redux/main";
 import { setIframeLoading } from "@_redux/main/designView";
 import { useAppState } from "@_redux/useAppState";
+import { LogAllow } from "@src/constants";
 
 import { jss, styles } from "./constants";
 import { markSelectedElements } from "./helpers";
 import { useCmdk, useMouseEvents, useSyncNode } from "./hooks";
 
-import { debounce } from "lodash";
-import eventEmitter from "@src/services/eventEmitter";
 import { AppState } from "@src/_redux/store";
-import { ProjectEvent } from "@src/types";
-import { useDesignView } from "../useDesignView";
 import { StageNodeIdAttr } from "@src/constants";
+import eventEmitter from "@src/services/eventEmitter";
+import { ProjectEvent } from "@src/types";
+import { debounce } from "lodash";
+import { useDesignView } from "../useDesignView";
 
 type AppStateReturnType = ReturnType<typeof useAppState>;
 export interface eventListenersStatesRefType extends AppStateReturnType {
@@ -127,37 +127,28 @@ export const IFrame = () => {
       htmlNode.addEventListener("mouseenter", () => {
         onMouseEnter();
       });
-      htmlNode.addEventListener("mousemove", (e: MouseEvent) => {
-        onMouseMove(e, eventListenersStatesRef);
-        window.parent.postMessage(
-          { type: "mousemove", movementX: e.movementX, movementY: e.movementY },
-          "*",
-        );
-      });
-      htmlNode.addEventListener("mouseleave", () => {
-        onMouseLeave();
-      });
-
       htmlNode.addEventListener("mouseover", (e: MouseEvent) => {
-        // onMouseOver(e, eventListenersStatesRef);
-
-        // Get the target element
         const target = e.target as HTMLElement;
+        // Directly get attribute from target, might be null if not on element
         const nodeId = target.getAttribute(StageNodeIdAttr);
 
-        // Check if Ctrl key (Windows) or Cmd key (Mac) is pressed
         const isModifierKeyPressed = e.ctrlKey || e.metaKey;
 
-        // Send the hover event to parent window with modifier key information
         if (nodeId) {
           window.parent.postMessage(
             {
-              type: isModifierKeyPressed ? "propagatedNodeHover" : "nodeHover",
+              type: isModifierKeyPressed ? "nodeHover" : "propagatedNodeHover",
               nodeId,
             },
             "*",
           );
         }
+        // We don't explicitly clear here, rely on mouseleave or next hover
+      });
+      htmlNode.addEventListener("mouseleave", () => {
+        onMouseLeave();
+        // Post message to clear hoverable elements
+        window.parent.postMessage({ type: "clearHover" }, "*");
       });
       htmlNode.addEventListener("click", (e: MouseEvent) => {
         e.preventDefault();
