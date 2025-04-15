@@ -56,17 +56,22 @@ export const useDesignView = (): DesignViewProps => {
       const hoverableUids = htmlService.getHoverableNodeUids();
       if (hoveredNodeUid !== null && hoverableUids.includes(hoveredNodeUid)) {
         htmlService.markHoveredElement(hoveredNodeUid);
+        const uidToDispatch = hoveredNodeUid;
+        dispatch(setHoveredNodeUidThunk(uidToDispatch));
       }
     },
-    [nodeTree, selectedNodes],
+    [dispatch, nodeTree, selectedNodes],
   );
 
   const handleNodeSelect = useCallback(
     (nodeId: TNodeUid) => {
-      dispatch(setSelectedNodeUidsThunk([nodeId]));
-      dispatch(expandAncestorsOfNodeThunk(nodeId));
+      // Check if the clicked node matches the established hover state
+      if (nodeId && nodeId === hoveredNode) {
+        dispatch(setSelectedNodeUidsThunk([nodeId]));
+        dispatch(expandAncestorsOfNodeThunk(nodeId));
+      }
     },
-    [dispatch],
+    [dispatch, hoveredNode],
   );
 
   const handleNodeDblClick = useCallback(

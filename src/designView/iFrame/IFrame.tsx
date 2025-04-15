@@ -152,7 +152,9 @@ export const IFrame = () => {
       });
       htmlNode.addEventListener("click", (e: MouseEvent) => {
         e.preventDefault();
-        onClick(e, eventListenersStatesRef);
+
+        // will instead use postMessage to handle the click event
+        // onClick(e, eventListenersStatesRef);
         // Get the target element
         const target = e.target as HTMLElement;
         const nodeId = target.getAttribute(StageNodeIdAttr);
