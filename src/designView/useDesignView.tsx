@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
+  expandAncestorsOfNodeThunk,
   setHoveredNodeUidThunk,
   setSelectedNodeUidsThunk,
 } from "@src/_redux/main/currentPage/currentPage.thunk";
@@ -63,6 +64,7 @@ export const useDesignView = (): DesignViewProps => {
   const handleNodeSelect = useCallback(
     (nodeId: TNodeUid) => {
       dispatch(setSelectedNodeUidsThunk([nodeId]));
+      dispatch(expandAncestorsOfNodeThunk(nodeId));
     },
     [dispatch],
   );

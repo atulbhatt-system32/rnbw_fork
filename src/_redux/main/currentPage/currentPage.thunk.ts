@@ -1,6 +1,8 @@
+import { TNodeUid } from "@_api/index"; // Adjust import path as needed
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { store } from "@src/_redux/store";
+import { AppState, store } from "@src/_redux/store";
 import { _writeIDBFile } from "@src/api/file/nohostApis";
+import { RootNodeUid } from "@src/constants"; // Adjust import path as needed
 import { getPreviewPath, markChangedFolders } from "@src/processor/helpers";
 import htmlService from "@src/services/html.service";
 import { TreeStructure } from "@src/types/html.types";
@@ -18,6 +20,41 @@ import {
   setHoveredNodeUid,
   setSelectedNodeUids,
 } from "./currentPage.slice";
+
+/**
+ * Calculates the list of ancestor UIDs for a given node,
+ * starting from the top-level node down to the direct parent.
+ * @param targetUid The UID of the node to find ancestors for.
+ * @param nodeTree The complete node tree structure.
+ * @returns An array of ancestor UIDs, ordered from root to parent.
+ */
+export function getAncestorUids(
+  targetUid: TNodeUid | undefined | null,
+  nodeTree: TreeStructure,
+): TNodeUid[] {
+  const ancestors: TNodeUid[] = [];
+  if (!targetUid || !nodeTree || !nodeTree[targetUid]) {
+    return ancestors; // Return empty if target/tree is invalid
+  }
+
+  let currentUid: TNodeUid | undefined = nodeTree[targetUid]?.data?.parentId;
+
+  while (currentUid && currentUid !== RootNodeUid && nodeTree[currentUid]) {
+    // Add the parent to the beginning of the list to maintain root-down order
+    ancestors.unshift(currentUid);
+
+    // Move up to the next parent
+    currentUid = nodeTree[currentUid]?.data?.parentId;
+  }
+
+  // Optionally add the root node itself if it wasn't added (e.g., if loop stopped at RootNodeUid)
+  // Check if the top-level node should always be included (like 'html1')
+  // Depending on your RootNodeUid structure, you might need to adjust slightly
+  // For example, if 'html1' is the direct child of RootNodeUid, the loop might stop too early.
+  // Let's assume the loop correctly includes the necessary top levels like 'html' and 'body'.
+
+  return ancestors;
+}
 
 export const setCurrentPageNewNodeTreeThunk = createAsyncThunk(
   "currentPage/setCurrentPageNewNodeTree",
@@ -176,3 +213,30 @@ export const setCurrentPageThunk = createAsyncThunk(
     }
   },
 );
+
+// --- New Thunk for Expanding Ancestors ---
+export const expandAncestorsOfNodeThunk = createAsyncThunk(
+  "currentPage/expandAncestorsOfNode", // Unique action type name
+  async (targetUid: string, { dispatch, getState }) => {
+    if (!targetUid) {
+      console.warn("expandAncestorsOfNodeThunk: No targetUid provided.");
+      return;
+    }
+
+    const state = getState() as AppState;
+    const nodeTree = state.main.currentPage.newNodeTree;
+
+    if (!nodeTree) {
+      console.error("expandAncestorsOfNodeThunk: nodeTree not found in state.");
+      return;
+    }
+
+    // Calculate ancestor UIDs using the existing helper
+    const ancestorUids = getAncestorUids(targetUid, nodeTree);
+    console.log("Expanding Ancestor UIDs:", ancestorUids); // For debugging
+
+    // Dispatch the action to update the expanded nodes state
+    dispatch(setExpandedNodeUids(ancestorUids));
+  },
+);
+// --- End New Thunk ---

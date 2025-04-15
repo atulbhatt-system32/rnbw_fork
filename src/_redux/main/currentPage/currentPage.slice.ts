@@ -43,9 +43,9 @@ const initialState: CurrentPageState = {
   updateType: "load",
   newNodeTree: {},
   nodeTreeViewState: {
-    selectedNodeUids: [],
+    selectedNodeUids: ["body6"],
     focusedNodeUid: "",
-    expandedNodeUids: [],
+    expandedNodeUids: ["html1"],
     hoveredNodeUid: "",
   },
 };
