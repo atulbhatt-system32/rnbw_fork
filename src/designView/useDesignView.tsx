@@ -10,6 +10,7 @@ import {
 } from "@src/_redux/main/currentPage/currentPage.thunk";
 import globalService from "@src/services/global.service";
 import htmlService from "@src/services/html.service";
+
 export interface DesignViewProps {
   hoveredNode: TNodeUid | null;
   selectedNodes: TNodeUid[];
@@ -65,13 +66,51 @@ export const useDesignView = (): DesignViewProps => {
 
   const handleNodeSelect = useCallback(
     (nodeId: TNodeUid) => {
-      // Check if the clicked node matches the established hover state
-      if (nodeId && nodeId === hoveredNode) {
-        dispatch(setSelectedNodeUidsThunk([nodeId]));
-        dispatch(expandAncestorsOfNodeThunk(nodeId));
+      // Get state needed for logic
+      const currentHoveredNode = hoveredNode; // Already available via useSelector
+      const tree = nodeTree; // Already available via useSelector
+
+      if (!nodeId) {
+        // Optionally dispatch deselect all or handle differently
+        dispatch(setSelectedNodeUidsThunk([]));
+        return;
+      }
+
+      if (!currentHoveredNode) {
+        // If nothing is hovered, a click shouldn't select anything based on hover
+        return;
+      }
+
+      if (!tree || Object.keys(tree).length === 0) {
+        return; // Cannot perform descendant check without tree
+      }
+
+      // Condition 1: Direct click on the hovered node
+      if (nodeId === currentHoveredNode) {
+        dispatch(setSelectedNodeUidsThunk([currentHoveredNode]));
+        dispatch(expandAncestorsOfNodeThunk(currentHoveredNode));
+      }
+      // Condition 2: Clicked node is a descendant of the hovered node
+      else {
+        const isDescendant = htmlService.findDirectChildOnPath(
+          nodeId, // potentialDescendantUid
+          currentHoveredNode, // ancestorUid
+          tree, // treeStructure
+        );
+
+        if (isDescendant !== false) {
+          // Check if it returned a child UID (is descendant)
+          // Select the HOVERED node, not the clicked one
+          dispatch(setSelectedNodeUidsThunk([currentHoveredNode]));
+          dispatch(expandAncestorsOfNodeThunk(currentHoveredNode));
+        } else {
+          // Clicked node is not the hovered node or its descendant
+          // Do nothing
+        }
       }
     },
-    [dispatch, hoveredNode],
+    // Update dependencies
+    [dispatch, hoveredNode, nodeTree],
   );
 
   const handleNodeDblClick = useCallback(

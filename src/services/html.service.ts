@@ -9,6 +9,7 @@ import { parse } from "parse5";
 import { Document } from "parse5/dist/tree-adapters/default";
 import { notify } from "./notificationService";
 
+import { TNodeUid } from "@_api/types";
 import { store } from "@src/_redux/store";
 //@ts-expect-error - allow importing idiomorph
 import Idiomorph from "idiomorph";
@@ -415,6 +416,46 @@ function getHoverableNodeUids(): string[] {
   return Array.from(hoverableUids);
 }
 
+/**
+ * Checks if potentialDescendantUid is a descendant of ancestorUid within a TreeStructure.
+ * If it is, returns the UID of the direct child of ancestorUid that is on the path
+ * towards potentialDescendantUid. Otherwise, returns false.
+ */
+function findDirectChildOnPath(
+  potentialDescendantUid: TNodeUid,
+  ancestorUid: TNodeUid,
+  treeStructure: TreeStructure,
+): TNodeUid | false {
+  if (
+    !treeStructure ||
+    !treeStructure[potentialDescendantUid] ||
+    !treeStructure[ancestorUid]
+  ) {
+    return false; // Invalid input
+  }
+
+  if (potentialDescendantUid === ancestorUid) {
+    return false; // Cannot be a descendant of itself for drill-down
+  }
+
+  let currentUid: string | undefined | null =
+    treeStructure[potentialDescendantUid]?.data?.parentId;
+  let previousUid: string = potentialDescendantUid; // Keep track of the node before the current parent
+  while (
+    currentUid &&
+    currentUid !== ancestorUid &&
+    currentUid !== RootNodeUid
+  ) {
+    if (!treeStructure[currentUid]) {
+      return false; // Structure inconsistency
+    }
+    previousUid = currentUid; // Update previous UID before moving up
+    currentUid = treeStructure[currentUid]?.data?.parentId;
+  }
+  // If the loop stopped because currentUid === ancestorUid, then previousUid is the direct child we want
+  return currentUid === ancestorUid ? previousUid : false;
+}
+
 export default {
   parseHtml,
   createNodeTree,
@@ -429,4 +470,5 @@ export default {
   findAndGetAllEditableNodes,
   updateIframe,
   getHoverableNodeUids,
+  findDirectChildOnPath,
 };
