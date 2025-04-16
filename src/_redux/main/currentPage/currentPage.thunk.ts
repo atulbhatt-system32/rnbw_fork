@@ -233,7 +233,6 @@ export const expandAncestorsOfNodeThunk = createAsyncThunk(
 
     // Calculate ancestor UIDs using the existing helper
     const ancestorUids = getAncestorUids(targetUid, nodeTree);
-    console.log("Expanding Ancestor UIDs:", ancestorUids); // For debugging
 
     // Dispatch the action to update the expanded nodes state
     dispatch(setExpandedNodeUids(ancestorUids));

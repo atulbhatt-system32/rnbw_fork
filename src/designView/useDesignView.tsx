@@ -8,6 +8,7 @@ import {
   setHoveredNodeUidThunk,
   setSelectedNodeUidsThunk,
 } from "@src/_redux/main/currentPage/currentPage.thunk";
+import { StageNodeIdAttr } from "@src/constants";
 import globalService from "@src/services/global.service";
 import htmlService from "@src/services/html.service";
 
@@ -115,19 +116,61 @@ export const useDesignView = (): DesignViewProps => {
 
   const handleNodeDblClick = useCallback(
     (nodeId: TNodeUid, clickX?: number, clickY?: number) => {
-      dispatch(setSelectedNodeUidsThunk([nodeId]));
+      const currentSelectedUids = selectedNodes; // From useSelector
+      const tree = nodeTree; // From useSelector
 
-      const isWebComponent = htmlService.checkIsNodeWebComponent(nodeId);
-      if (isWebComponent) {
-        //open the web component in editor
-        console.log("open the web component in editor");
-        //TODO: open the web component in editor
-      } else {
-        // Make the node editable with cursor position
-        htmlService.makeNodeEditable(nodeId, clickX, clickY);
+      if (!tree || Object.keys(tree).length === 0) {
+        return;
+      }
+
+      if (currentSelectedUids.length === 1) {
+        const selectedNodeUid = currentSelectedUids[0];
+        const textNodes = [
+          "P",
+          "H1",
+          "H2",
+          "H3",
+          "H4",
+          "H5",
+          "H6",
+          "SPAN",
+          "A",
+          "BUTTON",
+          "LABEL",
+        ];
+        const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+
+        // Use the new helper from htmlService
+        const childToSelect = htmlService.findDirectChildOnPath(
+          nodeId, // potentialDescendantUid
+          selectedNodeUid, // ancestorUid
+          tree, // treeStructure
+        );
+
+        if (childToSelect) {
+          // It IS a descendant, select the intermediate child
+          console.log(
+            `handleNodeDblClick: Drilling down from ${selectedNodeUid} to ${childToSelect}`,
+          );
+          dispatch(setSelectedNodeUidsThunk([childToSelect]));
+          dispatch(expandAncestorsOfNodeThunk(childToSelect));
+        } else {
+          // It's NOT a descendant (or is the selected node itself)
+          // Only make text nodes editable
+          const element = iframe?.contentWindow?.document?.querySelector(
+            `[${StageNodeIdAttr}="${nodeId}"]`,
+          );
+
+          if (element && textNodes.includes(element.tagName)) {
+            console.log(
+              `handleNodeDblClick: Making text node ${nodeId} editable at coordinates (${clickX}, ${clickY})`,
+            );
+            htmlService.makeNodeEditable(nodeId, clickX, clickY);
+          }
+        }
       }
     },
-    [dispatch],
+    [dispatch, selectedNodes, nodeTree, hoveredNode],
   );
 
   const handleMultiNodeSelect = useCallback(

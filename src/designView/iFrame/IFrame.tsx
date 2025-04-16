@@ -167,7 +167,7 @@ export const IFrame = () => {
       });
       htmlNode.addEventListener("dblclick", (e: MouseEvent) => {
         e.preventDefault();
-        onDblClick(e, eventListenersStatesRef);
+        // onDblClick(e, eventListenersStatesRef);
 
         const target = e.target as HTMLElement;
         const nodeId = target.getAttribute(StageNodeIdAttr);
