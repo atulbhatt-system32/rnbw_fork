@@ -456,6 +456,17 @@ function findDirectChildOnPath(
   return currentUid === ancestorUid ? previousUid : false;
 }
 
+function findNodeIdsByTagName(
+  nodeTree: TreeStructure,
+  tagName: string,
+): string[] {
+  return Object.entries(nodeTree)
+    .filter(
+      ([, node]) => node.data.nodeName.toLowerCase() === tagName.toLowerCase(),
+    )
+    .map(([uid]) => uid);
+}
+
 export default {
   parseHtml,
   createNodeTree,
@@ -471,4 +482,5 @@ export default {
   updateIframe,
   getHoverableNodeUids,
   findDirectChildOnPath,
+  findNodeIdsByTagName,
 };

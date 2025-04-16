@@ -18,6 +18,7 @@ import {
   setExpandedNodeUids,
   setFocusedNodeUid,
   setHoveredNodeUid,
+  setInitialNodeIds,
   setSelectedNodeUids,
 } from "./currentPage.slice";
 
@@ -191,6 +192,8 @@ export const setCurrentPageThunk = createAsyncThunk(
             uid: currentFileUid,
           }),
         );
+        // set the initial node IDs
+        dispatch(setInitialNodeIds());
         if (currentPage.updateType === "type") {
           htmlService.updateIframe(fileData.contentInApp as string);
         }

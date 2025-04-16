@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { THtmlNodeTreeData, TNodeTreeData } from "@src/api";
+import htmlService from "@src/services/html.service";
 import { TreeStructure } from "@src/types/html.types";
 
 export interface CurrentPageState {
@@ -43,9 +44,9 @@ const initialState: CurrentPageState = {
   updateType: "load",
   newNodeTree: {},
   nodeTreeViewState: {
-    selectedNodeUids: ["body6"],
+    selectedNodeUids: [],
     focusedNodeUid: "",
-    expandedNodeUids: ["html1"],
+    expandedNodeUids: [],
     hoveredNodeUid: "",
   },
 };
@@ -101,6 +102,20 @@ const currentPageSlice = createSlice({
     setCurrentPageNewNodeTree(state, action: PayloadAction<TreeStructure>) {
       state.newNodeTree = action.payload;
     },
+    setInitialNodeIds(state) {
+      const htmlNodeIds = htmlService.findNodeIdsByTagName(
+        state.newNodeTree,
+        "html",
+      );
+      const bodyNodeIds = htmlService.findNodeIdsByTagName(
+        state.newNodeTree,
+        "body",
+      );
+      if (htmlNodeIds.length > 0 && bodyNodeIds.length > 0) {
+        state.nodeTreeViewState.expandedNodeUids = [...htmlNodeIds];
+        state.nodeTreeViewState.selectedNodeUids = [...bodyNodeIds];
+      }
+    },
     resetCurrentPage() {
       return initialState;
     },
@@ -137,6 +152,7 @@ export const {
   morphCurrentPage,
   updateCurrentPageByTyping,
   setCurrentPageNewNodeTree,
+  setInitialNodeIds,
   setHoveredNodeUid,
   setSelectedNodeUids,
   setFocusedNodeUid,
