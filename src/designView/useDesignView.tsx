@@ -1,5 +1,6 @@
-import { TNodeUid } from "@_api/types";
+import { TNodeTreeData, TNodeUid } from "@_api/types";
 import { AppState } from "@src/_redux/store";
+import { TreeStructure } from "@src/types/html.types";
 import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -43,7 +44,7 @@ export const useDesignView = (): DesignViewProps => {
   );
 
   // Event handlers
-  const handleNodeHover = useCallback(
+  const handleNodeHoverWithModifier = useCallback(
     (nodeId: TNodeUid | null) => {
       if (nodeId) {
         dispatch(setHoveredNodeUidThunk(nodeId));
@@ -53,7 +54,7 @@ export const useDesignView = (): DesignViewProps => {
     [dispatch],
   );
 
-  const handlePropogatedNodeHover = useCallback(
+  const handleNodeHover = useCallback(
     (hoveredNodeUid: TNodeUid | null) => {
       const hoverableUids = htmlService.getHoverableNodeUids();
       if (hoveredNodeUid !== null && hoverableUids.includes(hoveredNodeUid)) {
@@ -68,57 +69,88 @@ export const useDesignView = (): DesignViewProps => {
   const handleNodeSelect = useCallback(
     (nodeId: TNodeUid) => {
       // Get state needed for logic
-      const currentHoveredNode = hoveredNode; // Already available via useSelector
-      const tree = nodeTree; // Already available via useSelector
+      const tree = nodeTree as unknown as TNodeTreeData;
+      const currentSelectedUid = selectedNodes[selectedNodes.length - 1];
 
-      if (!nodeId) {
-        // Optionally dispatch deselect all or handle differently
-        dispatch(setSelectedNodeUidsThunk([]));
+      // If the tree is not found, do nothing
+      if (!nodeId || !tree || Object.keys(tree).length === 0) {
         return;
       }
 
-      if (!currentHoveredNode) {
-        // If nothing is hovered, a click shouldn't select anything based on hover
+      // If no current selection, select the clicked node
+      if (!currentSelectedUid) {
+        dispatch(setSelectedNodeUidsThunk([nodeId]));
+        dispatch(expandAncestorsOfNodeThunk(nodeId));
         return;
       }
 
-      if (!tree || Object.keys(tree).length === 0) {
-        return; // Cannot perform descendant check without tree
+      // Check if clicked node is a descendant of currently selected node
+      const isDescendant = htmlService.findDirectChildOnPath(
+        nodeId,
+        currentSelectedUid,
+        tree as unknown as TreeStructure,
+      );
+
+      // If it is, do nothing, since this can be the most common scenario when clicking around a HTML page,
+      // and we don't need to unnecessarily calculate further conditions in this case.
+      if (isDescendant !== false) {
+        return;
       }
 
-      // Condition 1: Direct click on the hovered node
-      if (nodeId === currentHoveredNode) {
-        dispatch(setSelectedNodeUidsThunk([currentHoveredNode]));
-        dispatch(expandAncestorsOfNodeThunk(currentHoveredNode));
-      }
-      // Condition 2: Clicked node is a descendant of the hovered node
-      else {
-        const isDescendant = htmlService.findDirectChildOnPath(
-          nodeId, // potentialDescendantUid
-          currentHoveredNode, // ancestorUid
-          tree, // treeStructure
-        );
+      // case 2.Check if nodes are siblings (share same parent)
+      const foundSibling = htmlService.findSibling(nodeId);
 
-        if (isDescendant !== false) {
-          // Check if it returned a child UID (is descendant)
-          // Select the HOVERED node, not the clicked one
-          dispatch(setSelectedNodeUidsThunk([currentHoveredNode]));
-          dispatch(expandAncestorsOfNodeThunk(currentHoveredNode));
+      let foundAncestor;
+      // if its a sibling node or the same node, no need to check for ancestor
+      if (foundSibling !== false || nodeId === currentSelectedUid) {
+        foundAncestor = false;
+      } else {
+        // case 3. Check if clicked node is an ancestor of currently selected node
+        foundAncestor = htmlService.findAncestor(nodeId);
+      }
+
+      // Only select if:
+      // 1. It's the same node
+      // 2. It's a direct sibling (foundSibling === true)
+      //  2.1. It's a descendant of a sibling (foundSibling is a string UID)
+      // 3. It's an ancestor (parents and their siblings)
+      //  3.1. It's a descendant of an ancestor excluding the current node (in which case we select the ancestor)
+      if (
+        foundSibling === true ||
+        typeof foundSibling === "string" ||
+        // case 1. It's the same node
+        nodeId === currentSelectedUid ||
+        foundAncestor
+      ) {
+        let nodeToSelect;
+        if (typeof foundSibling === "string") {
+          nodeToSelect = foundSibling;
+        } else if (typeof foundAncestor === "string") {
+          nodeToSelect = foundAncestor;
         } else {
-          // Clicked node is not the hovered node or its descendant
-          // Do nothing
+          nodeToSelect = nodeId;
         }
+        dispatch(setSelectedNodeUidsThunk([nodeToSelect]));
+        dispatch(expandAncestorsOfNodeThunk(nodeToSelect));
+      } else {
+        // Do nothing
       }
     },
-    // Update dependencies
-    [dispatch, hoveredNode, nodeTree],
+    [dispatch, nodeTree, selectedNodes],
+  );
+
+  const handleNodeSelectWithModifier = useCallback(
+    (nodeId: TNodeUid) => {
+      dispatch(setSelectedNodeUidsThunk([nodeId]));
+      dispatch(expandAncestorsOfNodeThunk(nodeId));
+    },
+    [handleNodeSelect],
   );
 
   const handleNodeDblClick = useCallback(
     (nodeId: TNodeUid, clickX?: number, clickY?: number) => {
       const currentSelectedUids = selectedNodes; // From useSelector
       const tree = nodeTree; // From useSelector
-
       if (!tree || Object.keys(tree).length === 0) {
         return;
       }
@@ -217,11 +249,14 @@ export const useDesignView = (): DesignViewProps => {
         case "nodeHover":
           handleNodeHover(nodeId);
           break;
-        case "propagatedNodeHover":
-          handlePropogatedNodeHover(nodeId);
+        case "nodeHoverWithModifier":
+          handleNodeHoverWithModifier(nodeId);
           break;
         case "nodeSelect":
           handleNodeSelect(nodeId);
+          break;
+        case "nodeSelectWithModifier":
+          handleNodeSelectWithModifier(nodeId);
           break;
         case "multiNodeSelect":
           handleMultiNodeSelect(nodeIds);
@@ -250,7 +285,7 @@ export const useDesignView = (): DesignViewProps => {
     nodeTree,
     selectedNodes,
     handleNodeHover,
-    handlePropogatedNodeHover,
+    handleNodeHoverWithModifier,
     handleNodeSelect,
     handleMultiNodeSelect,
     handleNodeDblClick,

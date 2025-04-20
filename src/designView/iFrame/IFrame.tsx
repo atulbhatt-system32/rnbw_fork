@@ -57,6 +57,12 @@ export const IFrame = () => {
   const { nodeTreeRef, hoveredItemRef, selectedItemsRef } =
     useSyncNode(iframeRefState);
   const hoveredTargetRef = useRef(null);
+
+  // Add refs for click tracking for multiple clicks behaviour (drill down to subsequent child node selection)
+  const clickCountRef = useRef(0);
+  const lastClickTimeRef = useRef(0);
+  const lastClickNodeIdRef = useRef<string | null>(null);
+
   const eventListenersStatesRef = useRef<eventListenersStatesRefType>({
     ...appState,
     iframeRefState,
@@ -111,6 +117,48 @@ export const IFrame = () => {
     };
   }, [iframeRefState, currentPagePreviewUrl, dispatch]);
 
+  /**
+   * Handles the state for multiple clicks on the same node.
+   * This function:
+   * 1. Tracks the timing between clicks
+   * 2. Resets the click count if too much time has passed or a different node was clicked
+   * 3. Updates the click count and timing information
+   *
+   * @param nodeId - The ID of the node that was clicked
+   */
+  const handleMultipleClickState = (nodeId: string) => {
+    const now = Date.now();
+    const timeSinceLastClick = now - lastClickTimeRef.current;
+
+    // Reset click count if:
+    // - More than 500ms has passed since last click
+    // - A different node was clicked
+    if (timeSinceLastClick > 500 || nodeId !== lastClickNodeIdRef.current) {
+      clickCountRef.current = 0;
+    }
+
+    // Increment click count and update tracking information
+    clickCountRef.current++;
+    lastClickTimeRef.current = now;
+    lastClickNodeIdRef.current = nodeId;
+  };
+
+  /**
+   * Updates the click state after a double-click event.
+   * This function sets up the state for subsequent clicks to trigger
+   * double-click behavior, allowing continuous drilling into child nodes.
+   *
+   * @param nodeId - The ID of the node that was double-clicked
+   */
+  const updateMultipleClickState = (nodeId: string) => {
+    // Set click count to 2 to indicate we're in double-click mode
+    clickCountRef.current = 2;
+    // Update timing to track subsequent clicks
+    lastClickTimeRef.current = Date.now();
+    // Store the node ID to ensure subsequent clicks are on the same node
+    lastClickNodeIdRef.current = nodeId;
+  };
+
   const addHtmlNodeEventListeners = useCallback(
     (htmlNode: HTMLElement) => {
       //NOTE: all the values required for the event listeners are stored in the eventListenersStatesRef because the event listeners are not able to access the latest values of the variables due to the closure of the event listeners
@@ -137,7 +185,9 @@ export const IFrame = () => {
         if (nodeId) {
           window.parent.postMessage(
             {
-              type: isModifierKeyPressed ? "nodeHover" : "propagatedNodeHover",
+              type: isModifierKeyPressed
+                ? "nodeHoverWithModifier"
+                : "nodeHover",
               nodeId,
             },
             "*",
@@ -159,10 +209,31 @@ export const IFrame = () => {
         const target = e.target as HTMLElement;
         const nodeId = target.getAttribute(StageNodeIdAttr);
 
-        // Send the click event to parent window
         if (nodeId) {
-          // For single selection
-          window.parent.postMessage({ type: "nodeSelect", nodeId }, "*");
+          handleMultipleClickState(nodeId);
+          // Check if modifier keys are currently pressed
+          const isModifierKeyPressed = e.ctrlKey || e.metaKey;
+          if (isModifierKeyPressed) {
+            // with ctrl/cmd click selection
+            window.parent.postMessage(
+              { type: "nodeSelectWithModifier", nodeId },
+              "*",
+            );
+          } else if (clickCountRef.current >= 2) {
+            // For all clicks after double-click, use double-click behavior
+            window.parent.postMessage(
+              {
+                type: "nodeDblClick",
+                nodeId,
+                clickX: e.clientX,
+                clickY: e.clientY,
+              },
+              "*",
+            );
+          } else {
+            // without ctrl/cmd click selection
+            window.parent.postMessage({ type: "nodeSelect", nodeId }, "*");
+          }
         }
       });
       htmlNode.addEventListener("dblclick", (e: MouseEvent) => {
@@ -183,6 +254,8 @@ export const IFrame = () => {
             },
             "*",
           );
+          // Update click tracking for subsequent clicks
+          updateMultipleClickState(nodeId);
         }
       });
 

@@ -467,6 +467,113 @@ function findNodeIdsByTagName(
     .map(([uid]) => uid);
 }
 
+/**
+ * Checks if clickedNodeUid is an ancestor of selectedNodeUid in the given tree structure.
+ * Returns true if it is, and the UID of the sibling if it's a descendant of an ancestor excluding the current node. Otherwise, returns false.
+ */
+function findAncestor(clickedNodeUid: TNodeUid): boolean | TNodeUid {
+  const selectedNodeUid =
+    store.getState().main.currentPage?.nodeTreeViewState.selectedNodeUids[0];
+  const treeStructure = store.getState().main.currentPage?.newNodeTree;
+
+  if (!selectedNodeUid || !treeStructure) return false;
+
+  let currentUid: TNodeUid | null = selectedNodeUid;
+  const tree = treeStructure as unknown as Record<
+    TNodeUid,
+    {
+      data: { parentId: TNodeUid | null };
+      children?: TNodeUid[];
+    }
+  >;
+  // Keep going up the tree until we find the potential ancestor or hit the root
+  while (currentUid) {
+    const currentNode:
+      | {
+          data: { parentId: TNodeUid | null };
+          children?: TNodeUid[];
+        }
+      | undefined = tree[currentUid];
+    if (!currentNode) break;
+
+    // If we found the potential ancestor, return true
+    if (currentUid === clickedNodeUid) {
+      return true;
+    }
+    // Check if current node's parent has siblings that could be ancestors
+    const parentId = currentNode.data.parentId;
+    if (parentId) {
+      const parent = tree[parentId];
+      if (parent?.children) {
+        // Check all siblings of the parent
+        for (const siblingUid of parent.children) {
+          if (siblingUid !== currentUid) {
+            // If the clicked node is a direct sibling of parent, it's an ancestor
+            if (siblingUid === clickedNodeUid) {
+              return true;
+            } else {
+              // Check if the clicked node is a descendant of this sibling
+              const isDescendant = findDirectChildOnPath(
+                clickedNodeUid,
+                siblingUid,
+                treeStructure,
+              );
+              if (isDescendant) {
+                return siblingUid;
+              }
+            }
+          }
+        }
+      }
+    }
+    // Move up to the parent
+    currentUid = currentNode.data.parentId;
+  }
+
+  return false;
+}
+
+/**
+ * Checks if the clicked node is a sibling of the currently selected node.
+ * Returns true if it is, and the UID of the sibling if it's a descendant of a sibling, returns false otherwise.
+ */
+function findSibling(clickedNodeUid: TNodeUid): boolean | TNodeUid {
+  const selectedNodeUid =
+    store.getState().main.currentPage?.nodeTreeViewState.selectedNodeUids[0];
+  const treeStructure = store.getState().main.currentPage?.newNodeTree;
+
+  if (!selectedNodeUid || !treeStructure) return false;
+
+  const selectedNode = treeStructure[selectedNodeUid];
+  if (!selectedNode?.data.parentId) return false;
+
+  // Get the parent of the selected node to find its siblings
+  const selectedNodeParent = treeStructure[selectedNode.data.parentId];
+  if (!selectedNodeParent?.children) return false;
+
+  // Check each sibling to see if the clicked node is its descendant
+  for (const siblingUid of selectedNodeParent.children) {
+    // excluding current selected node, check if the clicked node is its descendant
+    if (siblingUid !== selectedNodeUid) {
+      // First check if it's a direct sibling
+      if (clickedNodeUid === siblingUid) {
+        return true;
+      }
+      // Then check if it's a descendant of a sibling
+      const isDescendant = findDirectChildOnPath(
+        clickedNodeUid,
+        siblingUid,
+        treeStructure,
+      );
+      if (isDescendant) {
+        return siblingUid;
+      }
+    }
+  }
+
+  return false;
+}
+
 export default {
   parseHtml,
   createNodeTree,
@@ -483,4 +590,6 @@ export default {
   getHoverableNodeUids,
   findDirectChildOnPath,
   findNodeIdsByTagName,
+  findAncestor,
+  findSibling,
 };
