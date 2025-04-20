@@ -9,7 +9,6 @@ import {
   setHoveredNodeUidThunk,
   setSelectedNodeUidsThunk,
 } from "@src/_redux/main/currentPage/currentPage.thunk";
-import { StageNodeIdAttr } from "@src/constants";
 import globalService from "@src/services/global.service";
 import htmlService from "@src/services/html.service";
 
@@ -157,20 +156,6 @@ export const useDesignView = (): DesignViewProps => {
 
       if (currentSelectedUids.length === 1) {
         const selectedNodeUid = currentSelectedUids[0];
-        const textNodes = [
-          "P",
-          "H1",
-          "H2",
-          "H3",
-          "H4",
-          "H5",
-          "H6",
-          "SPAN",
-          "A",
-          "BUTTON",
-          "LABEL",
-        ];
-        const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
 
         // Use the new helper from htmlService
         const childToSelect = htmlService.findDirectChildOnPath(
@@ -188,12 +173,8 @@ export const useDesignView = (): DesignViewProps => {
           dispatch(expandAncestorsOfNodeThunk(childToSelect));
         } else {
           // It's NOT a descendant (or is the selected node itself)
-          // Only make text nodes editable
-          const element = iframe?.contentWindow?.document?.querySelector(
-            `[${StageNodeIdAttr}="${nodeId}"]`,
-          );
-
-          if (element && textNodes.includes(element.tagName)) {
+          // Check if it's a text node
+          if (htmlService.isTextNode(nodeId)) {
             console.log(
               `handleNodeDblClick: Making text node ${nodeId} editable at coordinates (${clickX}, ${clickY})`,
             );

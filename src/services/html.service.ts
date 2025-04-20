@@ -574,6 +574,34 @@ function findSibling(clickedNodeUid: TNodeUid): boolean | TNodeUid {
   return false;
 }
 
+/**
+ * Checks if the given nodeId represents a text node.
+ * Returns true if the node is a text node, false otherwise.
+ */
+function isTextNode(nodeId: string): boolean {
+  const iframe = document.getElementById("iframeId") as HTMLIFrameElement;
+  const element = iframe?.contentWindow?.document?.querySelector(
+    `[${StageNodeIdAttr}="${nodeId}"]`,
+  );
+
+  if (!element) return false;
+
+  // Check if the element has no child elements (text nodes dont have children)
+  const hasNoChildElements = element.children.length === 0;
+
+  // Check if the element's first child is a text node
+  const firstChild = element.firstChild;
+
+  // Check if the element's first child is a text node (here Node.TEXT_NODE built in constant in browser's DOM API and nodeType is a property available in all DOM nodes(3 for text nodes))
+  const hasTextNode = firstChild?.nodeType === Node.TEXT_NODE;
+
+  // Check if the element has any visible text content
+  const textContent = element.textContent;
+  const hasVisibleText = textContent ? textContent.trim().length > 0 : false;
+
+  return hasNoChildElements && hasTextNode && hasVisibleText;
+}
+
 export default {
   parseHtml,
   createNodeTree,
@@ -592,4 +620,5 @@ export default {
   findNodeIdsByTagName,
   findAncestor,
   findSibling,
+  isTextNode,
 };
