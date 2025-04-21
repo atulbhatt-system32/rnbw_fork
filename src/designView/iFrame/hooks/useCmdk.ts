@@ -13,6 +13,7 @@ import { eventListenersStatesRefType } from "../IFrame";
 import useRnbw from "@_services/useRnbw";
 import { useMonacoEditor } from "@src/context/editor.context";
 import { setHoveredNodeUidThunk } from "@src/_redux/main/currentPage/currentPage.thunk";
+import { store } from "@src/_redux/store";
 export const useCmdk = () => {
   const dispatch = useDispatch();
   const rnbw = useRnbw();
@@ -60,6 +61,9 @@ export const useCmdk = () => {
         hoveredNodeUid,
       } = eventListenerRef.current;
       // cmdk obj for the current command
+
+      // if the text is being edited, don't run the command
+      if (store.getState().main.currentPage.isEditingTextNode) return;
 
       if (getCommandKey(e, osType)) {
         iframeRefRef.current?.focus();

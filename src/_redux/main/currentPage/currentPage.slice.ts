@@ -22,6 +22,7 @@ export interface CurrentPageState {
     expandedNodeUids: string[];
     hoveredNodeUid: string;
   };
+  isEditingTextNode: boolean;
 }
 
 interface ContentUpdatePayload {
@@ -49,6 +50,7 @@ const initialState: CurrentPageState = {
     expandedNodeUids: [],
     hoveredNodeUid: "",
   },
+  isEditingTextNode: false,
 };
 
 const currentPageSlice = createSlice({
@@ -140,6 +142,9 @@ const currentPageSlice = createSlice({
     setHoveredNodeUid(state, action: PayloadAction<string>) {
       state.nodeTreeViewState.hoveredNodeUid = action.payload;
     },
+    setIsEditingTextNode: (state, action: PayloadAction<boolean>) => {
+      state.isEditingTextNode = action.payload;
+    },
   },
 });
 
@@ -160,5 +165,6 @@ export const {
   addExpandedNodeUid,
   removeExpandedNodeUid,
   setCurrentPageExtension,
+  setIsEditingTextNode,
 } = currentPageSlice.actions;
 export default currentPageSlice.reducer;

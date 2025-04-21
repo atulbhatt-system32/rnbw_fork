@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   expandAncestorsOfNodeThunk,
   setHoveredNodeUidThunk,
+  setIsEditingTextNodeThunk,
   setSelectedNodeUidsThunk,
 } from "@src/_redux/main/currentPage/currentPage.thunk";
 import globalService from "@src/services/global.service";
@@ -178,6 +179,7 @@ export const useDesignView = (): DesignViewProps => {
             console.log(
               `handleNodeDblClick: Making text node ${nodeId} editable at coordinates (${clickX}, ${clickY})`,
             );
+            dispatch(setIsEditingTextNodeThunk(true));
             htmlService.makeNodeEditable(nodeId, clickX, clickY);
           }
         }
@@ -195,6 +197,7 @@ export const useDesignView = (): DesignViewProps => {
 
   const handleNodeBlur = useCallback(
     (nodeId: TNodeUid) => {
+      dispatch(setIsEditingTextNodeThunk(false));
       htmlService.makeNodeNonEditable(nodeId);
     },
     [dispatch],

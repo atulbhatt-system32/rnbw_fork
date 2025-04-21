@@ -19,6 +19,7 @@ import { jss, styles } from "./constants";
 import { markSelectedElements } from "./helpers";
 import { useCmdk, useMouseEvents, useSyncNode } from "./hooks";
 
+import { setActivePanel } from "@src/_redux/main/processor";
 import { AppState } from "@src/_redux/store";
 import { StageNodeIdAttr } from "@src/constants";
 import eventEmitter from "@src/services/eventEmitter";
@@ -62,6 +63,7 @@ export const IFrame = () => {
   const clickCountRef = useRef(0);
   const lastClickTimeRef = useRef(0);
   const lastClickNodeIdRef = useRef<string | null>(null);
+  const { activePanel } = useAppState();
 
   const eventListenersStatesRef = useRef<eventListenersStatesRefType>({
     ...appState,
@@ -202,6 +204,9 @@ export const IFrame = () => {
       });
       htmlNode.addEventListener("click", (e: MouseEvent) => {
         e.preventDefault();
+
+        // since the click event is triggered by the iframe for stage view, we need to set the active panel to stage if its not already set
+        activePanel !== "stage" && dispatch(setActivePanel("stage"));
 
         // will instead use postMessage to handle the click event
         // onClick(e, eventListenersStatesRef);
@@ -467,7 +472,7 @@ export const IFrame = () => {
             id={"iframeId"}
             src={currentPagePreviewUrl}
             style={{
-              background: "white",
+              background: "grey",
               width: "100%",
               height: "100%",
             }}

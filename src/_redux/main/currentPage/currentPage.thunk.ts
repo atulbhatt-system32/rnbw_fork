@@ -1,6 +1,6 @@
 import { TNodeUid } from "@_api/index"; // Adjust import path as needed
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { AppState, store } from "@src/_redux/store";
+import { AppDispatch, AppState, store } from "@src/_redux/store";
 import { _writeIDBFile } from "@src/api/file/nohostApis";
 import { RootNodeUid } from "@src/constants"; // Adjust import path as needed
 import { getPreviewPath, markChangedFolders } from "@src/processor/helpers";
@@ -19,6 +19,7 @@ import {
   setFocusedNodeUid,
   setHoveredNodeUid,
   setInitialNodeIds,
+  setIsEditingTextNode,
   setSelectedNodeUids,
 } from "./currentPage.slice";
 
@@ -242,3 +243,9 @@ export const expandAncestorsOfNodeThunk = createAsyncThunk(
   },
 );
 // --- End New Thunk ---
+
+export const setIsEditingTextNodeThunk = (isEditing: boolean) => {
+  return (dispatch: AppDispatch) => {
+    dispatch(setIsEditingTextNode(isEditing));
+  };
+};
